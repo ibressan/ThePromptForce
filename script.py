@@ -43,7 +43,7 @@ from google.genai import types
 from prompt import build_image_prompt, build_prompt
 
 GEMINI_MODEL = "gemini-flash-latest"
-IMAGE_MODEL = "imagen-4.0-generate-001"
+IMAGE_MODEL = "gemini-2.5-flash-image"
 
 MAX_CHARS_PER_SOURCE = 4000
 MAX_RSS_ENTRIES_PER_SOURCE = 5
@@ -173,27 +173,32 @@ def extract_visual_themes(raw_summary):
 
 
 def generate_cover_image(api_key, visual_themes, output_path):
-    """Generates the edition's cover illustration with Imagen and saves it to output_path.
+    """Generates the edition's cover illustration and saves it to output_path.
 
-    Returns True on success, False on failure — a missing cover should never abort the
-    whole run, since the text summary is the primary deliverable.
+    Uses Gemini's native image output (generateContent with an IMAGE response
+    modality) rather than the separate Imagen "predict" API — the standalone Imagen
+    models are gated off for newer API keys, while the native Gemini image models are
+    available. Returns True on success, False on failure — a missing cover should never
+    abort the whole run, since the text summary is the primary deliverable.
     """
     try:
         client = genai.Client(api_key=api_key)
-        result = client.models.generate_images(
+        response = client.models.generate_content(
             model=IMAGE_MODEL,
-            prompt=build_image_prompt(visual_themes),
-            config=types.GenerateImagesConfig(
-                number_of_images=1,
-                output_mime_type="image/jpeg",
-                aspect_ratio="16:9",
-            ),
+            contents=build_image_prompt(visual_themes),
+            config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
         )
-        if not result.generated_images:
-            print("[WARNING] Imagen returned no images.", file=sys.stderr)
+        image_bytes = None
+        for part in response.candidates[0].content.parts:
+            inline_data = getattr(part, "inline_data", None)
+            if inline_data and inline_data.data:
+                image_bytes = inline_data.data
+                break
+        if not image_bytes:
+            print("[WARNING] Image response contained no image data.", file=sys.stderr)
             return False
         with open(output_path, "wb") as f:
-            f.write(result.generated_images[0].image.image_bytes)
+            f.write(image_bytes)
         return True
     except Exception as error:
         print(f"[WARNING] Failed to generate cover image: {error}", file=sys.stderr)
