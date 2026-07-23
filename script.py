@@ -1,21 +1,27 @@
 """
-Main script for the Salesforce News Bot.
+Main script for the Salesforce News bot.
+
+This repository is self-contained: the automation code and the generated content
+(sources.json, editions/, README.md) live in the same public repo, so the workflow
+just checks the repo out, runs this script, and pushes back to itself — no separate
+repo, PAT, or cross-repo clone involved.
 
 Flow:
-  1. Clones the public repository (salesforce-news-community) using a PAT.
-  2. Reads sources.json from the cloned repository and collects content (RSS and HTML).
-  3. Sends the raw content to Gemini, which generates the bilingual (PT-BR + English)
+  1. Reads sources.json (repo root) and collects content (RSS and HTML).
+  2. Sends the raw content to Gemini, which generates the bilingual (PT-BR + English)
      weekly summary plus a short list of visual themes for the cover art.
-  4. Generates a cover illustration for the edition via the free Pollinations.ai image
+  3. Generates a cover illustration for the edition via the free Pollinations.ai image
      API, using those themes (no API key or billing required).
-  5. Distributes the summary via Telegram and email.
-  6. Saves the new edition to editions/YYYY-MM-DD.md (with the cover) and updates README.md.
-  7. Commits and pushes the changes back to the public repository.
+  4. Distributes the summary via Telegram and email.
+  5. Saves the new edition to editions/YYYY-MM-DD.md (with the cover) and updates README.md.
+  6. Commits and pushes the changes.
 
 Set DRY_RUN=true to only collect sources and generate the summary and cover (saved
 locally as dry_run_summary.md / dry_run_cover.jpg) without sending Telegram/email or
-pushing anything. In that mode, sources.json is read directly from the public repo over
-HTTPS (it's public, so no PAT is needed) instead of via an authenticated clone.
+committing/pushing anything.
+
+Set SKIP_NOTIFICATIONS=true to generate and publish (commit/push) without sending
+Telegram/email.
 
 All credentials are read exclusively from environment variables (os.environ).
 No key, token or password should ever be hardcoded in this file.
@@ -24,16 +30,14 @@ No key, token or password should ever be hardcoded in this file.
 import json
 import os
 import re
-import shutil
 import smtplib
 import subprocess
 import sys
-import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 
 import feedparser
 import markdown as md_lib
@@ -60,29 +64,11 @@ MARKER_END = "<!-- SALESFORCE_NEWS_END -->"
 # --------------------------------------------------------------------------
 # Content ingestion
 # --------------------------------------------------------------------------
-def load_sources(sources_path):
-    """Loads the list of sources from the public repository's sources.json (local file)."""
+def load_sources(sources_path="sources.json"):
+    """Loads the list of sources from sources.json (repo root)."""
     with open(sources_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data.get("sources", [])
-
-
-def github_owner_and_repo(repo_url):
-    """Extracts (owner, repo) from a GitHub HTTPS URL such as https://github.com/owner/repo.git."""
-    path = urlparse(repo_url).path.strip("/")
-    if path.endswith(".git"):
-        path = path[: -len(".git")]
-    owner, repo = path.split("/", 1)
-    return owner, repo
-
-
-def fetch_public_sources(repo_url, branch="main"):
-    """Reads sources.json directly from the public repo over HTTPS, without needing a PAT."""
-    owner, repo = github_owner_and_repo(repo_url)
-    raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/sources.json"
-    response = requests.get(raw_url, timeout=HTTP_TIMEOUT)
-    response.raise_for_status()
-    return json.loads(response.text).get("sources", [])
 
 
 def entry_published_at(entry):
@@ -308,27 +294,11 @@ def send_email(subject, markdown_content, sender, recipient, app_password):
 
 
 # --------------------------------------------------------------------------
-# Persistence in the public repository (clone, editions/, README.md, push)
+# Persistence (editions/, README.md, commit + push to this same repo)
 # --------------------------------------------------------------------------
-def authenticated_url(repo_url, token):
-    """Injects the PAT into the repository's HTTPS URL to allow authenticated clone/push."""
-    parts = urlparse(repo_url)
-    return parts._replace(netloc=f"x-access-token:{token}@{parts.netloc}").geturl()
-
-
-def clone_public_repo(destination, repo_url, token):
-    url_with_token = authenticated_url(repo_url, token)
-    subprocess.run(["git", "clone", "--depth", "1", url_with_token, destination], check=True)
-    subprocess.run(["git", "-C", destination, "config", "user.name", "Salesforce News Bot"], check=True)
-    subprocess.run(
-        ["git", "-C", destination, "config", "user.email", "salesforce-news-bot@users.noreply.github.com"],
-        check=True,
-    )
-
-
-def save_edition(repo_path, date_str, markdown_content, cover_relative_path=None):
+def save_edition(date_str, markdown_content, cover_relative_path=None):
     """Saves the new edition's Markdown to editions/YYYY-MM-DD.md, with the cover on top if present."""
-    editions_dir = os.path.join(repo_path, "editions")
+    editions_dir = "editions"
     os.makedirs(editions_dir, exist_ok=True)
     file_name = f"{date_str}.md"
     file_path = os.path.join(editions_dir, file_name)
@@ -341,9 +311,9 @@ def save_edition(repo_path, date_str, markdown_content, cover_relative_path=None
     return f"editions/{file_name}"
 
 
-def update_readme(repo_path, date_str, markdown_content, relative_edition_path, cover_relative_path=None):
+def update_readme(date_str, markdown_content, relative_edition_path, cover_relative_path=None):
     """Replaces the block between the markers in README.md with the latest edition."""
-    readme_path = os.path.join(repo_path, "README.md")
+    readme_path = "README.md"
     with open(readme_path, "r", encoding="utf-8") as f:
         readme_content = f.read()
 
@@ -359,26 +329,25 @@ def update_readme(repo_path, date_str, markdown_content, relative_edition_path, 
 
     pattern = re.compile(re.escape(MARKER_START) + r".*?" + re.escape(MARKER_END), re.DOTALL)
     if not pattern.search(readme_content):
-        raise RuntimeError(
-            f"Markers {MARKER_START} / {MARKER_END} not found in the public repository's README.md."
-        )
+        raise RuntimeError(f"Markers {MARKER_START} / {MARKER_END} not found in README.md.")
 
     updated_content = pattern.sub(new_block, readme_content)
     with open(readme_path, "w", encoding="utf-8") as f:
         f.write(updated_content)
 
 
-def commit_and_push(repo_path, date_str):
-    subprocess.run(["git", "-C", repo_path, "add", "editions", "README.md"], check=True)
-    result = subprocess.run(["git", "-C", repo_path, "diff", "--cached", "--quiet"])
+def commit_and_push(date_str):
+    subprocess.run(["git", "config", "user.name", "Salesforce News Bot"], check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "salesforce-news-bot@users.noreply.github.com"], check=True
+    )
+    subprocess.run(["git", "add", "editions", "README.md"], check=True)
+    result = subprocess.run(["git", "diff", "--cached", "--quiet"])
     if result.returncode == 0:
         print("[INFO] Nothing to commit.")
         return
-    subprocess.run(
-        ["git", "-C", repo_path, "commit", "-m", f"Weekly edition of {date_str}"],
-        check=True,
-    )
-    subprocess.run(["git", "-C", repo_path, "push"], check=True)
+    subprocess.run(["git", "commit", "-m", f"Weekly edition of {date_str}"], check=True)
+    subprocess.run(["git", "push"], check=True)
 
 
 def require_env(name):
@@ -418,31 +387,41 @@ def main():
     dry_run = is_dry_run()
 
     gemini_api_key = require_env("GEMINI_API_KEY")
-    public_repo_url = require_env("PUBLIC_REPO_URL")
 
     if os.environ.get("LIST_MODELS", "false").strip().lower() in ("1", "true", "yes"):
         list_available_models(gemini_api_key)
         return
 
+    skip_notifications = is_skip_notifications()
+    if not dry_run:
+        if skip_notifications:
+            print("[INFO] SKIP_NOTIFICATIONS is set — Telegram/email will not be sent.")
+        else:
+            telegram_token = require_env("TELEGRAM_TOKEN")
+            telegram_chat_id = require_env("TELEGRAM_CHAT_ID")
+            gmail_app_password = require_env("GMAIL_APP_PASSWORD")
+            email_sender = require_env("EMAIL_REMETENTE")
+            email_recipient = os.environ.get("EMAIL_DESTINATARIO", email_sender)
+
+    print("[INFO] Loading sources...")
+    sources = load_sources()
+    if not sources:
+        print("[ERROR] No sources found in sources.json.", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"[INFO] Collecting content from {len(sources)} source(s)...")
+    raw_content = collect_all_sources(sources)
+    if not raw_content.strip():
+        print("[ERROR] No content collected from the sources.", file=sys.stderr)
+        sys.exit(1)
+
+    print("[INFO] Generating summary with Gemini...")
+    raw_summary = generate_summary(raw_content, gemini_api_key)
+    summary_markdown, visual_themes = extract_visual_themes(raw_summary)
+    print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
+
     if dry_run:
-        print("[INFO] DRY RUN — no Telegram/email will be sent, nothing will be pushed.")
-        print("[INFO] Fetching sources.json directly from the public repo (no PAT needed)...")
-        sources = fetch_public_sources(public_repo_url)
-        if not sources:
-            print("[ERROR] No sources found in sources.json.", file=sys.stderr)
-            sys.exit(1)
-
-        print(f"[INFO] Collecting content from {len(sources)} source(s)...")
-        raw_content = collect_all_sources(sources)
-        if not raw_content.strip():
-            print("[ERROR] No content collected from the sources.", file=sys.stderr)
-            sys.exit(1)
-
-        print("[INFO] Generating summary with Gemini...")
-        raw_summary = generate_summary(raw_content, gemini_api_key)
-        summary_markdown, visual_themes = extract_visual_themes(raw_summary)
-        print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
-
+        print("[INFO] DRY RUN — no Telegram/email will be sent, nothing will be committed.")
         print("[INFO] Generating cover image with Pollinations...")
         cover_path = os.path.join(os.getcwd(), "dry_run_cover.jpg")
         cover_ok = generate_cover_image(visual_themes, cover_path)
@@ -462,73 +441,35 @@ def main():
             print("[WARNING] Cover image was not generated (see warning above).")
         return
 
-    skip_notifications = is_skip_notifications()
-    pat_github = require_env("PAT_GITHUB")
+    print("[INFO] Generating cover image with Pollinations...")
+    os.makedirs("editions", exist_ok=True)
+    cover_file_name = f"cover-{date_str}.jpg"
+    cover_ok = generate_cover_image(visual_themes, os.path.join("editions", cover_file_name))
+    cover_relative_path = f"editions/{cover_file_name}" if cover_ok else None
 
     if skip_notifications:
-        print("[INFO] SKIP_NOTIFICATIONS is set — Telegram/email will not be sent.")
+        print("[INFO] Skipping Telegram and email (SKIP_NOTIFICATIONS is set).")
     else:
-        telegram_token = require_env("TELEGRAM_TOKEN")
-        telegram_chat_id = require_env("TELEGRAM_CHAT_ID")
-        gmail_app_password = require_env("GMAIL_APP_PASSWORD")
-        email_sender = require_env("EMAIL_REMETENTE")
-        email_recipient = os.environ.get("EMAIL_DESTINATARIO", email_sender)
+        print("[INFO] Sending to Telegram...")
+        send_telegram(summary_markdown, telegram_token, telegram_chat_id)
 
-    public_repo_dir = tempfile.mkdtemp(prefix="salesforce-news-community-")
-    try:
-        print("[INFO] Cloning public repository...")
-        clone_public_repo(public_repo_dir, public_repo_url, pat_github)
+        print("[INFO] Sending email...")
+        send_email(
+            f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})",
+            summary_markdown,
+            email_sender,
+            email_recipient,
+            gmail_app_password,
+        )
 
-        print("[INFO] Loading sources...")
-        sources = load_sources(os.path.join(public_repo_dir, "sources.json"))
-        if not sources:
-            print("[ERROR] No sources found in sources.json.", file=sys.stderr)
-            sys.exit(1)
+    print("[INFO] Saving edition and updating README...")
+    edition_path = save_edition(date_str, summary_markdown, cover_relative_path)
+    update_readme(date_str, summary_markdown, edition_path, cover_relative_path)
 
-        print(f"[INFO] Collecting content from {len(sources)} source(s)...")
-        raw_content = collect_all_sources(sources)
-        if not raw_content.strip():
-            print("[ERROR] No content collected from the sources.", file=sys.stderr)
-            sys.exit(1)
+    print("[INFO] Publishing...")
+    commit_and_push(date_str)
 
-        print("[INFO] Generating summary with Gemini...")
-        raw_summary = generate_summary(raw_content, gemini_api_key)
-        summary_markdown, visual_themes = extract_visual_themes(raw_summary)
-        print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
-
-        print("[INFO] Generating cover image with Pollinations...")
-        editions_dir = os.path.join(public_repo_dir, "editions")
-        os.makedirs(editions_dir, exist_ok=True)
-        cover_file_name = f"cover-{date_str}.jpg"
-        cover_abs_path = os.path.join(editions_dir, cover_file_name)
-        cover_ok = generate_cover_image(visual_themes, cover_abs_path)
-        cover_relative_path = f"editions/{cover_file_name}" if cover_ok else None
-
-        if skip_notifications:
-            print("[INFO] Skipping Telegram and email (SKIP_NOTIFICATIONS is set).")
-        else:
-            print("[INFO] Sending to Telegram...")
-            send_telegram(summary_markdown, telegram_token, telegram_chat_id)
-
-            print("[INFO] Sending email...")
-            send_email(
-                f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})",
-                summary_markdown,
-                email_sender,
-                email_recipient,
-                gmail_app_password,
-            )
-
-        print("[INFO] Saving edition and updating README...")
-        edition_path = save_edition(public_repo_dir, date_str, summary_markdown, cover_relative_path)
-        update_readme(public_repo_dir, date_str, summary_markdown, edition_path, cover_relative_path)
-
-        print("[INFO] Publishing to the public repository...")
-        commit_and_push(public_repo_dir, date_str)
-
-        print("[SUCCESS] Weekly edition published successfully.")
-    finally:
-        shutil.rmtree(public_repo_dir, ignore_errors=True)
+    print("[SUCCESS] Weekly edition published successfully.")
 
 
 if __name__ == "__main__":

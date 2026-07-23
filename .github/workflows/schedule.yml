@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Dry run: only generate the summary (no Telegram/email, no push)"
+        description: "Dry run: only generate the summary (no Telegram/email, no commit)"
         required: false
         default: "false"
       list_models:
@@ -18,15 +18,18 @@ on:
         required: false
         default: "false"
       skip_notifications:
-        description: "Publish only: generate and push, but skip Telegram/email"
+        description: "Publish only: generate and commit, but skip Telegram/email"
         required: false
         default: "false"
+
+permissions:
+  contents: write
 
 jobs:
   generate-and-publish-summary:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout private repository (bot)
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
@@ -48,8 +51,6 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           EMAIL_REMETENTE: ${{ secrets.EMAIL_REMETENTE }}
           EMAIL_DESTINATARIO: ${{ secrets.EMAIL_DESTINATARIO }}
-          PAT_GITHUB: ${{ secrets.PAT_GITHUB }}
-          PUBLIC_REPO_URL: ${{ secrets.PUBLIC_REPO_URL }}
         run: python script.py
 
       - name: Upload dry-run summary and cover as artifact

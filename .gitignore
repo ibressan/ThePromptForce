@@ -3,3 +3,5 @@ __pycache__/
 .venv/
 venv/
 .env
+dry_run_summary.md
+dry_run_cover.jpg
