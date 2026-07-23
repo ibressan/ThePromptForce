@@ -40,7 +40,7 @@ from bs4 import BeautifulSoup
 
 from prompt import build_prompt
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-flash-latest"
 
 MAX_CHARS_PER_SOURCE = 4000
 MAX_RSS_ENTRIES_PER_SOURCE = 5
