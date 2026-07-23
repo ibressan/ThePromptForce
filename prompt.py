@@ -89,19 +89,14 @@ def build_prompt(raw_content: str) -> str:
     return SYSTEM_PROMPT.format(raw_content=raw_content)
 
 
-IMAGE_STYLE_PROMPT = """\
-A minimalist, professional flat-style vector illustration for the cover of a Salesforce \
-ecosystem tech news digest. Visually reference this edition's themes through abstract \
-geometric shapes, cloud icons, circuit-like connection patterns, and dashboard/data \
-elements: {visual_themes}. Color palette: Salesforce blue (#0176D3), white, and a dark \
-navy background, with subtle gradient accents. Style: clean, minimalist, corporate tech \
-aesthetic, high quality, vector art, 4k.
-Absolutely no text, no letters, no words, no logos, no watermarks anywhere in the image.
-16:9 aspect ratio, suitable as a banner/cover image.
-"""
+IMAGE_STYLE_PROMPT = (
+    "minimalist flat vector illustration, Salesforce cloud platform, {visual_themes}, "
+    "blue #0176D3 and dark navy palette, clean corporate tech style, no text, no logos"
+)
 
 
 def build_image_prompt(visual_themes: list) -> str:
-    """Builds the Imagen prompt, weaving in this edition's themes extracted by Gemini."""
-    themes_text = ", ".join(visual_themes) if visual_themes else "Salesforce cloud platform, AI, developers"
+    """Builds the (short — this goes into a URL, keep it lean) cover prompt, weaving in
+    this edition's themes extracted by Gemini."""
+    themes_text = ", ".join(visual_themes) if visual_themes else "cloud technology, AI, developers"
     return IMAGE_STYLE_PROMPT.format(visual_themes=themes_text)
