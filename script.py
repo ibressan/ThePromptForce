@@ -133,6 +133,14 @@ def generate_summary(raw_content, api_key):
     return response.text.strip()
 
 
+def list_available_models(api_key):
+    """Debug helper: lists the Gemini models this API key can call generate_content on."""
+    genai.configure(api_key=api_key)
+    for m in genai.list_models():
+        if "generateContent" in m.supported_generation_methods:
+            print(m.name)
+
+
 # --------------------------------------------------------------------------
 # Formatting
 # --------------------------------------------------------------------------
@@ -301,6 +309,10 @@ def main():
 
     gemini_api_key = require_env("GEMINI_API_KEY")
     public_repo_url = require_env("PUBLIC_REPO_URL")
+
+    if os.environ.get("LIST_MODELS", "false").strip().lower() in ("1", "true", "yes"):
+        list_available_models(gemini_api_key)
+        return
 
     if dry_run:
         print("[INFO] DRY RUN — no Telegram/email will be sent, nothing will be pushed.")

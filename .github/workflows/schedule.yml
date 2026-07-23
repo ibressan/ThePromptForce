@@ -10,6 +10,10 @@ on:
         description: "Dry run: only generate the summary (no Telegram/email, no push)"
         required: false
         default: "false"
+      list_models:
+        description: "Debug: list Gemini models available to this API key and exit"
+        required: false
+        default: "false"
 
 jobs:
   generate-and-publish-summary:
@@ -29,6 +33,7 @@ jobs:
       - name: Run collection, generation and distribution script
         env:
           DRY_RUN: ${{ github.event.inputs.dry_run }}
+          LIST_MODELS: ${{ github.event.inputs.list_models }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
