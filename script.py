@@ -28,6 +28,7 @@ import smtplib
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -148,13 +149,30 @@ def collect_all_sources(sources):
 # --------------------------------------------------------------------------
 # Summary generation with Gemini
 # --------------------------------------------------------------------------
-def generate_summary(raw_content, api_key):
+def generate_summary(raw_content, api_key, max_attempts=3):
     """Calls the Gemini API to generate the bilingual (PT-BR + English) weekly summary,
-    followed by a VISUAL_THEMES line (see extract_visual_themes)."""
+    followed by a VISUAL_THEMES line (see extract_visual_themes).
+
+    Retries with backoff on transient server errors (e.g. 503 "high demand") — this call
+    is the one step nothing else in the pipeline can proceed without, so it's worth
+    riding out a temporary blip rather than failing the whole run.
+    """
     client = genai.Client(api_key=api_key)
     final_prompt = build_prompt(raw_content)
-    response = client.models.generate_content(model=GEMINI_MODEL, contents=final_prompt)
-    return response.text.strip()
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = client.models.generate_content(model=GEMINI_MODEL, contents=final_prompt)
+            return response.text.strip()
+        except Exception as error:
+            if attempt == max_attempts:
+                raise
+            wait_seconds = 15 * attempt
+            print(
+                f"[WARNING] Gemini call failed (attempt {attempt}/{max_attempts}): {error}. "
+                f"Retrying in {wait_seconds}s...",
+                file=sys.stderr,
+            )
+            time.sleep(wait_seconds)
 
 
 def extract_visual_themes(raw_summary):
@@ -172,37 +190,45 @@ def extract_visual_themes(raw_summary):
     return summary_markdown, themes
 
 
-def generate_cover_image(api_key, visual_themes, output_path):
+def generate_cover_image(api_key, visual_themes, output_path, max_attempts=2):
     """Generates the edition's cover illustration and saves it to output_path.
 
     Uses Gemini's native image output (generateContent with an IMAGE response
     modality) rather than the separate Imagen "predict" API — the standalone Imagen
     models are gated off for newer API keys, while the native Gemini image models are
     available. Returns True on success, False on failure — a missing cover should never
-    abort the whole run, since the text summary is the primary deliverable.
+    abort the whole run, since the text summary is the primary deliverable, so failures
+    (including after retries) are caught and logged rather than raised.
     """
-    try:
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model=IMAGE_MODEL,
-            contents=build_image_prompt(visual_themes),
-            config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
-        )
-        image_bytes = None
-        for part in response.candidates[0].content.parts:
-            inline_data = getattr(part, "inline_data", None)
-            if inline_data and inline_data.data:
-                image_bytes = inline_data.data
-                break
-        if not image_bytes:
-            print("[WARNING] Image response contained no image data.", file=sys.stderr)
-            return False
-        with open(output_path, "wb") as f:
-            f.write(image_bytes)
-        return True
-    except Exception as error:
-        print(f"[WARNING] Failed to generate cover image: {error}", file=sys.stderr)
-        return False
+    client = genai.Client(api_key=api_key)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = client.models.generate_content(
+                model=IMAGE_MODEL,
+                contents=build_image_prompt(visual_themes),
+                config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
+            )
+            image_bytes = None
+            for part in response.candidates[0].content.parts:
+                inline_data = getattr(part, "inline_data", None)
+                if inline_data and inline_data.data:
+                    image_bytes = inline_data.data
+                    break
+            if not image_bytes:
+                print("[WARNING] Image response contained no image data.", file=sys.stderr)
+                return False
+            with open(output_path, "wb") as f:
+                f.write(image_bytes)
+            return True
+        except Exception as error:
+            if attempt == max_attempts:
+                print(f"[WARNING] Failed to generate cover image: {error}", file=sys.stderr)
+                return False
+            print(
+                f"[WARNING] Cover image attempt {attempt}/{max_attempts} failed: {error}. Retrying...",
+                file=sys.stderr,
+            )
+            time.sleep(10)
 
 
 def list_available_models(api_key):
