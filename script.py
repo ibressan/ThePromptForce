@@ -27,7 +27,7 @@ import smtplib
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from urllib.parse import urlparse
@@ -44,6 +44,7 @@ GEMINI_MODEL = "gemini-flash-latest"
 
 MAX_CHARS_PER_SOURCE = 4000
 MAX_RSS_ENTRIES_PER_SOURCE = 5
+MAX_AGE_DAYS = 15
 HTTP_TIMEOUT = 15
 
 MARKER_START = "<!-- SALESFORCE_NEWS_START -->"
@@ -78,28 +79,48 @@ def fetch_public_sources(repo_url, branch="main"):
     return json.loads(response.text).get("sources", [])
 
 
-def collect_rss(name, url):
-    """Extracts the most recent entries from an RSS/Atom feed."""
+def entry_published_at(entry):
+    """Returns the entry's publish date as a UTC datetime, or None if the feed doesn't provide one."""
+    for field in ("published_parsed", "updated_parsed"):
+        value = entry.get(field)
+        if value:
+            return datetime(*value[:6], tzinfo=timezone.utc)
+    return None
+
+
+def collect_rss(name, url, max_age_days=MAX_AGE_DAYS):
+    """Extracts the most recent entries from an RSS/Atom feed, skipping ones older than max_age_days."""
     feed = feedparser.parse(url)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
     parts = []
-    for entry in feed.entries[:MAX_RSS_ENTRIES_PER_SOURCE]:
+    for entry in feed.entries:
+        if len(parts) >= MAX_RSS_ENTRIES_PER_SOURCE:
+            break
+        published_at = entry_published_at(entry)
+        if published_at is not None and published_at < cutoff:
+            continue
         title = entry.get("title", "").strip()
         link = entry.get("link", "").strip()
         summary_html = entry.get("summary", "") or entry.get("description", "")
         summary_text = BeautifulSoup(summary_html, "html.parser").get_text(" ", strip=True)
-        parts.append(f"### {title}\nLink: {link}\n{summary_text}")
+        date_label = published_at.strftime("%Y-%m-%d") if published_at else "unknown"
+        parts.append(f"### {title}\nPublished: {date_label}\nLink: {link}\n{summary_text}")
     return "\n\n".join(parts)[:MAX_CHARS_PER_SOURCE]
 
 
 def collect_html(name, url):
-    """Does simple scraping of a page that has no RSS feed available."""
+    """Does simple scraping of a page that has no RSS feed available.
+
+    There's no structured per-article publish date here (just a raw page scrape), so the
+    date is marked as unknown to prevent the model from inventing one.
+    """
     response = requests.get(url, timeout=HTTP_TIMEOUT, headers={"User-Agent": "Mozilla/5.0"})
     response.raise_for_status()
     soup = BeautifulSoup(response.text, "html.parser")
     for tag in soup(["script", "style", "nav", "footer", "header"]):
         tag.decompose()
     text = soup.get_text(" ", strip=True)
-    return text[:MAX_CHARS_PER_SOURCE]
+    return f"Published: unknown\nLink: {url}\n{text}"[:MAX_CHARS_PER_SOURCE]
 
 
 def collect_all_sources(sources):
