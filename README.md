@@ -1,10 +1,13 @@
 # salesforce-news-bot (private)
 
 Automation that collects Salesforce community blog/feed news, generates a bilingual
-(PT-BR + English) weekly summary via Google Gemini (`gemini-flash-latest`) plus a cover
-illustration via Imagen (`imagen-3.0-generate-002`), distributes the summary via
+(PT-BR + English) summary via Google Gemini (`gemini-flash-latest`) plus a cover
+illustration via Imagen (`imagen-4.0-generate-001`), distributes the summary via
 Telegram and email, and publishes the result (text + cover) to the public
 [`salesforce-news-community`](../salesforce-news-community) repository.
+
+Cadence isn't finalized yet — it currently runs biweekly (see the "Schedule" section
+below), not weekly.
 
 Uses the unified `google-genai` SDK (`from google import genai`) for both text and
 image generation — the older `google-generativeai` package doesn't support Imagen.
@@ -21,7 +24,15 @@ blocks publishing the text summary.
 - `script.py` — orchestrates collection, generation, distribution and publishing.
 - `prompt.py` — instruction prompt sent to Gemini.
 - `requirements.txt` — Python dependencies.
-- `.github/workflows/schedule.yml` — schedules the weekly run via GitHub Actions.
+- `.github/workflows/schedule.yml` — schedules the run via GitHub Actions.
+
+## Schedule
+
+The workflow's cron fires every Monday, but `script.py`'s `is_biweekly_scheduled_week()`
+skips odd ISO weeks when triggered by the schedule — net effect: runs every other
+Monday. Manual runs (`workflow_dispatch`, e.g. `dry_run`/`skip_notifications`) always
+execute regardless of week parity. To go back to weekly, remove that check in
+`main()`.
 
 ## Required secrets (Settings → Secrets and variables → Actions)
 
@@ -38,7 +49,7 @@ blocks publishing the text summary.
 
 ## Manual run
 
-From GitHub: Actions → "Weekly Salesforce News Summary" → Run workflow, with optional inputs:
+From GitHub: Actions → "Salesforce News Summary" → Run workflow, with optional inputs:
 
 - `dry_run: true` — only generates the summary (printed to the log and uploaded as an
   artifact); does not touch Telegram, email, or the public repo. Only needs
@@ -50,8 +61,8 @@ From GitHub: Actions → "Weekly Salesforce News Summary" → Run workflow, with
 - `list_models: true` — debug helper that lists the models (text and image) available to
   the configured API key and exits.
 
-With no inputs (or on the weekly schedule), it runs the full flow: generate, send to
-Telegram and email, and publish.
+With no inputs (or on a scheduled biweekly Monday), it runs the full flow: generate,
+send to Telegram and email, and publish.
 
 Locally (requires the same environment variables exported):
 
