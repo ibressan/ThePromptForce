@@ -1,9 +1,20 @@
 # salesforce-news-bot (private)
 
 Automation that collects Salesforce community blog/feed news, generates a bilingual
-(PT-BR + English) weekly summary via Google Gemini, distributes it via Telegram and
-email, and publishes the result to the public
+(PT-BR + English) weekly summary via Google Gemini (`gemini-flash-latest`) plus a cover
+illustration via Imagen (`imagen-3.0-generate-002`), distributes the summary via
+Telegram and email, and publishes the result (text + cover) to the public
 [`salesforce-news-community`](../salesforce-news-community) repository.
+
+Uses the unified `google-genai` SDK (`from google import genai`) for both text and
+image generation — the older `google-generativeai` package doesn't support Imagen.
+
+The cover's visual theme is driven by the content itself: the same Gemini call that
+writes the summary also returns a short list of visual concepts extracted from that
+edition's news (see the `VISUAL_THEMES:` line handling in `prompt.py` / `script.py`),
+which get woven into the Imagen prompt. If image generation fails for any reason (quota,
+model availability, etc.), the run continues without a cover — a missing image never
+blocks publishing the text summary.
 
 ## Files
 
@@ -36,8 +47,8 @@ From GitHub: Actions → "Weekly Salesforce News Summary" → Run workflow, with
   repo (new file in `editions/`, updated `README.md`), but skips Telegram/email. Needs
   `GEMINI_API_KEY`, `PAT_GITHUB` and `PUBLIC_REPO_URL` — the Telegram/Gmail secrets are
   not required in this mode.
-- `list_models: true` — debug helper that lists the Gemini models available to the
-  configured API key and exits.
+- `list_models: true` — debug helper that lists the models (text and image) available to
+  the configured API key and exits.
 
 With no inputs (or on the weekly schedule), it runs the full flow: generate, send to
 Telegram and email, and publish.

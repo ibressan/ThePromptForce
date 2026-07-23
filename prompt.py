@@ -69,6 +69,14 @@ sub-section, omit that sub-section instead of forcing irrelevant content. Apply 
 consistently in both language sections.
 7. Do not invent information, dates, links or features that are not present in the \
 provided raw content.
+8. VISUAL THEMES: after writing both language sections, add one final line — and nothing \
+after it — starting with the exact literal prefix "VISUAL_THEMES:" followed by a \
+comma-separated list of 3 to 6 short visual concepts (in English, 2-4 words each) that \
+capture this edition's main technical themes. These are used to generate an abstract \
+cover illustration, so keep them conceptual/visual rather than literal feature names — \
+e.g. prefer "cloud data unification" over "Data Cloud identity resolution GA", prefer \
+"AI agent orchestration" over "MCP server hosting". Example line:
+   VISUAL_THEMES: cloud data unification, AI agent orchestration, low-code automation
 
 --- RAW CONTENT ---
 {raw_content}
@@ -79,3 +87,21 @@ provided raw content.
 def build_prompt(raw_content: str) -> str:
     """Fills the raw content collected from blogs into the prompt template."""
     return SYSTEM_PROMPT.format(raw_content=raw_content)
+
+
+IMAGE_STYLE_PROMPT = """\
+A minimalist, professional flat-style vector illustration for the cover of a Salesforce \
+ecosystem tech news digest. Visually reference this edition's themes through abstract \
+geometric shapes, cloud icons, circuit-like connection patterns, and dashboard/data \
+elements: {visual_themes}. Color palette: Salesforce blue (#0176D3), white, and a dark \
+navy background, with subtle gradient accents. Style: clean, minimalist, corporate tech \
+aesthetic, high quality, vector art, 4k.
+Absolutely no text, no letters, no words, no logos, no watermarks anywhere in the image.
+16:9 aspect ratio, suitable as a banner/cover image.
+"""
+
+
+def build_image_prompt(visual_themes: list) -> str:
+    """Builds the Imagen prompt, weaving in this edition's themes extracted by Gemini."""
+    themes_text = ", ".join(visual_themes) if visual_themes else "Salesforce cloud platform, AI, developers"
+    return IMAGE_STYLE_PROMPT.format(visual_themes=themes_text)

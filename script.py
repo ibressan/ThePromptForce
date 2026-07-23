@@ -5,15 +5,16 @@ Flow:
   1. Clones the public repository (salesforce-news-community) using a PAT.
   2. Reads sources.json from the cloned repository and collects content (RSS and HTML).
   3. Sends the raw content to Gemini, which generates the bilingual (PT-BR + English)
-     weekly summary.
-  4. Distributes the summary via Telegram and email.
-  5. Saves the new edition to editions/YYYY-MM-DD.md and updates README.md.
-  6. Commits and pushes the changes back to the public repository.
+     weekly summary plus a short list of visual themes for the cover art.
+  4. Generates a cover illustration for the edition with Imagen, using those themes.
+  5. Distributes the summary via Telegram and email.
+  6. Saves the new edition to editions/YYYY-MM-DD.md (with the cover) and updates README.md.
+  7. Commits and pushes the changes back to the public repository.
 
-Set DRY_RUN=true to only collect sources and generate the summary (printed to stdout
-and saved to dry_run_summary.md) without sending Telegram/email or pushing anything.
-In that mode, sources.json is read directly from the public repo over HTTPS (it's
-public, so no PAT is needed) instead of via an authenticated clone.
+Set DRY_RUN=true to only collect sources and generate the summary and cover (saved
+locally as dry_run_summary.md / dry_run_cover.jpg) without sending Telegram/email or
+pushing anything. In that mode, sources.json is read directly from the public repo over
+HTTPS (it's public, so no PAT is needed) instead of via an authenticated clone.
 
 All credentials are read exclusively from environment variables (os.environ).
 No key, token or password should ever be hardcoded in this file.
@@ -33,14 +34,16 @@ from email.mime.text import MIMEText
 from urllib.parse import urlparse
 
 import feedparser
-import google.generativeai as genai
 import markdown as md_lib
 import requests
 from bs4 import BeautifulSoup
+from google import genai
+from google.genai import types
 
-from prompt import build_prompt
+from prompt import build_image_prompt, build_prompt
 
 GEMINI_MODEL = "gemini-flash-latest"
+IMAGE_MODEL = "imagen-3.0-generate-002"
 
 MAX_CHARS_PER_SOURCE = 4000
 MAX_RSS_ENTRIES_PER_SOURCE = 5
@@ -146,20 +149,63 @@ def collect_all_sources(sources):
 # Summary generation with Gemini
 # --------------------------------------------------------------------------
 def generate_summary(raw_content, api_key):
-    """Calls the Gemini API to generate the bilingual (PT-BR + English) weekly summary."""
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(GEMINI_MODEL)
+    """Calls the Gemini API to generate the bilingual (PT-BR + English) weekly summary,
+    followed by a VISUAL_THEMES line (see extract_visual_themes)."""
+    client = genai.Client(api_key=api_key)
     final_prompt = build_prompt(raw_content)
-    response = model.generate_content(final_prompt)
+    response = client.models.generate_content(model=GEMINI_MODEL, contents=final_prompt)
     return response.text.strip()
 
 
+def extract_visual_themes(raw_summary):
+    """Splits off the trailing 'VISUAL_THEMES: a, b, c' line from the generated summary.
+
+    Returns (summary_markdown, visual_themes_list). If the line isn't present, returns
+    the summary unchanged and an empty theme list (the cover prompt falls back to a
+    generic Salesforce theme in that case).
+    """
+    match = re.search(r"^VISUAL_THEMES:\s*(.+)$", raw_summary, re.MULTILINE)
+    if not match:
+        return raw_summary.strip(), []
+    themes = [t.strip() for t in match.group(1).split(",") if t.strip()]
+    summary_markdown = raw_summary[: match.start()].rstrip()
+    return summary_markdown, themes
+
+
+def generate_cover_image(api_key, visual_themes, output_path):
+    """Generates the edition's cover illustration with Imagen and saves it to output_path.
+
+    Returns True on success, False on failure — a missing cover should never abort the
+    whole run, since the text summary is the primary deliverable.
+    """
+    try:
+        client = genai.Client(api_key=api_key)
+        result = client.models.generate_images(
+            model=IMAGE_MODEL,
+            prompt=build_image_prompt(visual_themes),
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                output_mime_type="image/jpeg",
+                aspect_ratio="16:9",
+            ),
+        )
+        if not result.generated_images:
+            print("[WARNING] Imagen returned no images.", file=sys.stderr)
+            return False
+        with open(output_path, "wb") as f:
+            f.write(result.generated_images[0].image.image_bytes)
+        return True
+    except Exception as error:
+        print(f"[WARNING] Failed to generate cover image: {error}", file=sys.stderr)
+        return False
+
+
 def list_available_models(api_key):
-    """Debug helper: lists the Gemini models this API key can call generate_content on."""
-    genai.configure(api_key=api_key)
-    for m in genai.list_models():
-        if "generateContent" in m.supported_generation_methods:
-            print(m.name)
+    """Debug helper: lists models this API key can access, for both text and image generation."""
+    client = genai.Client(api_key=api_key)
+    for m in client.models.list():
+        actions = getattr(m, "supported_actions", None)
+        print(m.name, actions if actions is not None else "")
 
 
 # --------------------------------------------------------------------------
@@ -257,29 +303,32 @@ def clone_public_repo(destination, repo_url, token):
     )
 
 
-def save_edition(repo_path, date_str, markdown_content):
-    """Saves the new edition's Markdown to editions/YYYY-MM-DD.md."""
+def save_edition(repo_path, date_str, markdown_content, cover_relative_path=None):
+    """Saves the new edition's Markdown to editions/YYYY-MM-DD.md, with the cover on top if present."""
     editions_dir = os.path.join(repo_path, "editions")
     os.makedirs(editions_dir, exist_ok=True)
     file_name = f"{date_str}.md"
     file_path = os.path.join(editions_dir, file_name)
 
-    header = f"# Edição de {date_str} / Weekly Edition — {date_str}\n\n"
+    cover_markdown = f"![Cover]({os.path.basename(cover_relative_path)})\n\n" if cover_relative_path else ""
+    header = cover_markdown + f"# Edição de {date_str} / Weekly Edition — {date_str}\n\n"
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(header + markdown_content + "\n")
 
     return f"editions/{file_name}"
 
 
-def update_readme(repo_path, date_str, markdown_content, relative_edition_path):
+def update_readme(repo_path, date_str, markdown_content, relative_edition_path, cover_relative_path=None):
     """Replaces the block between the markers in README.md with the latest edition."""
     readme_path = os.path.join(repo_path, "README.md")
     with open(readme_path, "r", encoding="utf-8") as f:
         readme_content = f.read()
 
+    cover_markdown = f"![Cover]({cover_relative_path})\n\n" if cover_relative_path else ""
     new_block = (
         f"{MARKER_START}\n"
         f"### 🗓️ Edição de {date_str} / Weekly Edition {date_str}\n\n"
+        f"{cover_markdown}"
         f"{markdown_content}\n\n"
         f"📄 [Ver esta edição no histórico / View this edition in the archive]({relative_edition_path})\n"
         f"{MARKER_END}"
@@ -354,7 +403,13 @@ def main():
             sys.exit(1)
 
         print("[INFO] Generating summary with Gemini...")
-        summary_markdown = generate_summary(raw_content, gemini_api_key)
+        raw_summary = generate_summary(raw_content, gemini_api_key)
+        summary_markdown, visual_themes = extract_visual_themes(raw_summary)
+        print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
+
+        print("[INFO] Generating cover image with Imagen...")
+        cover_path = os.path.join(os.getcwd(), "dry_run_cover.jpg")
+        cover_ok = generate_cover_image(gemini_api_key, visual_themes, cover_path)
 
         output_path = os.path.join(os.getcwd(), "dry_run_summary.md")
         with open(output_path, "w", encoding="utf-8") as f:
@@ -365,6 +420,10 @@ def main():
         print("=" * 80 + "\n")
         print(summary_markdown)
         print(f"\n[SUCCESS] Dry run finished. Summary saved to {output_path}.")
+        if cover_ok:
+            print(f"[SUCCESS] Cover image saved to {cover_path}.")
+        else:
+            print("[WARNING] Cover image was not generated (see warning above).")
         return
 
     skip_notifications = is_skip_notifications()
@@ -397,7 +456,17 @@ def main():
             sys.exit(1)
 
         print("[INFO] Generating summary with Gemini...")
-        summary_markdown = generate_summary(raw_content, gemini_api_key)
+        raw_summary = generate_summary(raw_content, gemini_api_key)
+        summary_markdown, visual_themes = extract_visual_themes(raw_summary)
+        print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
+
+        print("[INFO] Generating cover image with Imagen...")
+        editions_dir = os.path.join(public_repo_dir, "editions")
+        os.makedirs(editions_dir, exist_ok=True)
+        cover_file_name = f"cover-{date_str}.jpg"
+        cover_abs_path = os.path.join(editions_dir, cover_file_name)
+        cover_ok = generate_cover_image(gemini_api_key, visual_themes, cover_abs_path)
+        cover_relative_path = f"editions/{cover_file_name}" if cover_ok else None
 
         if skip_notifications:
             print("[INFO] Skipping Telegram and email (SKIP_NOTIFICATIONS is set).")
@@ -415,8 +484,8 @@ def main():
             )
 
         print("[INFO] Saving edition and updating README...")
-        edition_path = save_edition(public_repo_dir, date_str, summary_markdown)
-        update_readme(public_repo_dir, date_str, summary_markdown, edition_path)
+        edition_path = save_edition(public_repo_dir, date_str, summary_markdown, cover_relative_path)
+        update_readme(public_repo_dir, date_str, summary_markdown, edition_path, cover_relative_path)
 
         print("[INFO] Publishing to the public repository...")
         commit_and_push(public_repo_dir, date_str)

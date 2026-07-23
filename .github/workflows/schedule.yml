@@ -49,9 +49,12 @@ jobs:
           PUBLIC_REPO_URL: ${{ secrets.PUBLIC_REPO_URL }}
         run: python script.py
 
-      - name: Upload dry-run summary as artifact
+      - name: Upload dry-run summary and cover as artifact
         if: ${{ github.event.inputs.dry_run == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: dry-run-summary
-          path: dry_run_summary.md
+          path: |
+            dry_run_summary.md
+            dry_run_cover.jpg
+          if-no-files-found: warn
