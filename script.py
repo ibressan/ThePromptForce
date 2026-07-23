@@ -10,10 +10,16 @@ Flow:
   5. Saves the new edition to editions/YYYY-MM-DD.md and updates README.md.
   6. Commits and pushes the changes back to the public repository.
 
+Set DRY_RUN=true to only collect sources and generate the summary (printed to stdout
+and saved to dry_run_summary.md) without sending Telegram/email or pushing anything.
+In that mode, sources.json is read directly from the public repo over HTTPS (it's
+public, so no PAT is needed) instead of via an authenticated clone.
+
 All credentials are read exclusively from environment variables (os.environ).
 No key, token or password should ever be hardcoded in this file.
 """
 
+import json
 import os
 import re
 import shutil
@@ -34,19 +40,6 @@ from bs4 import BeautifulSoup
 
 from prompt import build_prompt
 
-# --------------------------------------------------------------------------
-# Configuration via environment variables (never hardcode secrets here)
-# --------------------------------------------------------------------------
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
-TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
-GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
-EMAIL_SENDER = os.environ["EMAIL_REMETENTE"]
-# Falls back to sending the email to the sender itself if no recipient is set.
-EMAIL_RECIPIENT = os.environ.get("EMAIL_DESTINATARIO", EMAIL_SENDER)
-PAT_GITHUB = os.environ["PAT_GITHUB"]
-PUBLIC_REPO_URL = os.environ["PUBLIC_REPO_URL"]
-
 GEMINI_MODEL = "gemini-2.5-flash"
 
 MAX_CHARS_PER_SOURCE = 4000
@@ -61,12 +54,28 @@ MARKER_END = "<!-- SALESFORCE_NEWS_END -->"
 # Content ingestion
 # --------------------------------------------------------------------------
 def load_sources(sources_path):
-    """Loads the list of sources from the public repository's sources.json."""
-    import json
-
+    """Loads the list of sources from the public repository's sources.json (local file)."""
     with open(sources_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data.get("sources", [])
+
+
+def github_owner_and_repo(repo_url):
+    """Extracts (owner, repo) from a GitHub HTTPS URL such as https://github.com/owner/repo.git."""
+    path = urlparse(repo_url).path.strip("/")
+    if path.endswith(".git"):
+        path = path[: -len(".git")]
+    owner, repo = path.split("/", 1)
+    return owner, repo
+
+
+def fetch_public_sources(repo_url, branch="main"):
+    """Reads sources.json directly from the public repo over HTTPS, without needing a PAT."""
+    owner, repo = github_owner_and_repo(repo_url)
+    raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/sources.json"
+    response = requests.get(raw_url, timeout=HTTP_TIMEOUT)
+    response.raise_for_status()
+    return json.loads(response.text).get("sources", [])
 
 
 def collect_rss(name, url):
@@ -115,9 +124,9 @@ def collect_all_sources(sources):
 # --------------------------------------------------------------------------
 # Summary generation with Gemini
 # --------------------------------------------------------------------------
-def generate_summary(raw_content):
+def generate_summary(raw_content, api_key):
     """Calls the Gemini API to generate the bilingual (PT-BR + English) weekly summary."""
-    genai.configure(api_key=GEMINI_API_KEY)
+    genai.configure(api_key=api_key)
     model = genai.GenerativeModel(GEMINI_MODEL)
     final_prompt = build_prompt(raw_content)
     response = model.generate_content(final_prompt)
@@ -162,14 +171,14 @@ def _split_into_chunks(text, limit=4000):
     return chunks
 
 
-def send_telegram(markdown_content):
+def send_telegram(markdown_content, token, chat_id):
     """Sends the summary to a Telegram chat/channel via the HTTP API."""
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
     for chunk in _split_into_chunks(markdown_content):
         response = requests.post(
             url,
             data={
-                "chat_id": TELEGRAM_CHAT_ID,
+                "chat_id": chat_id,
                 "text": chunk,
                 "parse_mode": "Markdown",
                 "disable_web_page_preview": True,
@@ -183,12 +192,12 @@ def send_telegram(markdown_content):
 # --------------------------------------------------------------------------
 # Distribution - Email (Gmail SMTP)
 # --------------------------------------------------------------------------
-def send_email(subject, markdown_content):
+def send_email(subject, markdown_content, sender, recipient, app_password):
     """Sends the summary by email via Gmail SMTP, in both plain text and HTML."""
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
-    message["From"] = EMAIL_SENDER
-    message["To"] = EMAIL_RECIPIENT
+    message["From"] = sender
+    message["To"] = recipient
 
     text_part = MIMEText(markdown_content, "plain", "utf-8")
     html_part = MIMEText(markdown_to_email_html(subject, markdown_content), "html", "utf-8")
@@ -196,8 +205,8 @@ def send_email(subject, markdown_content):
     message.attach(html_part)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(EMAIL_SENDER, GMAIL_APP_PASSWORD)
-        server.sendmail(EMAIL_SENDER, EMAIL_RECIPIENT, message.as_string())
+        server.login(sender, app_password)
+        server.sendmail(sender, recipient, message.as_string())
 
 
 # --------------------------------------------------------------------------
@@ -209,8 +218,8 @@ def authenticated_url(repo_url, token):
     return parts._replace(netloc=f"x-access-token:{token}@{parts.netloc}").geturl()
 
 
-def clone_public_repo(destination):
-    url_with_token = authenticated_url(PUBLIC_REPO_URL, PAT_GITHUB)
+def clone_public_repo(destination, repo_url, token):
+    url_with_token = authenticated_url(repo_url, token)
     subprocess.run(["git", "clone", "--depth", "1", url_with_token, destination], check=True)
     subprocess.run(["git", "-C", destination, "config", "user.name", "Salesforce News Bot"], check=True)
     subprocess.run(
@@ -271,16 +280,67 @@ def commit_and_push(repo_path, date_str):
     subprocess.run(["git", "-C", repo_path, "push"], check=True)
 
 
+def require_env(name):
+    value = os.environ.get(name)
+    if not value:
+        print(f"[ERROR] Missing required environment variable: {name}", file=sys.stderr)
+        sys.exit(1)
+    return value
+
+
+def is_dry_run():
+    return os.environ.get("DRY_RUN", "false").strip().lower() in ("1", "true", "yes")
+
+
 # --------------------------------------------------------------------------
 # Main execution
 # --------------------------------------------------------------------------
 def main():
     date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    public_repo_dir = tempfile.mkdtemp(prefix="salesforce-news-community-")
+    dry_run = is_dry_run()
 
+    gemini_api_key = require_env("GEMINI_API_KEY")
+    public_repo_url = require_env("PUBLIC_REPO_URL")
+
+    if dry_run:
+        print("[INFO] DRY RUN — no Telegram/email will be sent, nothing will be pushed.")
+        print("[INFO] Fetching sources.json directly from the public repo (no PAT needed)...")
+        sources = fetch_public_sources(public_repo_url)
+        if not sources:
+            print("[ERROR] No sources found in sources.json.", file=sys.stderr)
+            sys.exit(1)
+
+        print(f"[INFO] Collecting content from {len(sources)} source(s)...")
+        raw_content = collect_all_sources(sources)
+        if not raw_content.strip():
+            print("[ERROR] No content collected from the sources.", file=sys.stderr)
+            sys.exit(1)
+
+        print("[INFO] Generating summary with Gemini...")
+        summary_markdown = generate_summary(raw_content, gemini_api_key)
+
+        output_path = os.path.join(os.getcwd(), "dry_run_summary.md")
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(summary_markdown)
+
+        print("\n" + "=" * 80)
+        print("DRY RUN OUTPUT")
+        print("=" * 80 + "\n")
+        print(summary_markdown)
+        print(f"\n[SUCCESS] Dry run finished. Summary saved to {output_path}.")
+        return
+
+    telegram_token = require_env("TELEGRAM_TOKEN")
+    telegram_chat_id = require_env("TELEGRAM_CHAT_ID")
+    gmail_app_password = require_env("GMAIL_APP_PASSWORD")
+    email_sender = require_env("EMAIL_REMETENTE")
+    email_recipient = os.environ.get("EMAIL_DESTINATARIO", email_sender)
+    pat_github = require_env("PAT_GITHUB")
+
+    public_repo_dir = tempfile.mkdtemp(prefix="salesforce-news-community-")
     try:
         print("[INFO] Cloning public repository...")
-        clone_public_repo(public_repo_dir)
+        clone_public_repo(public_repo_dir, public_repo_url, pat_github)
 
         print("[INFO] Loading sources...")
         sources = load_sources(os.path.join(public_repo_dir, "sources.json"))
@@ -295,13 +355,19 @@ def main():
             sys.exit(1)
 
         print("[INFO] Generating summary with Gemini...")
-        summary_markdown = generate_summary(raw_content)
+        summary_markdown = generate_summary(raw_content, gemini_api_key)
 
         print("[INFO] Sending to Telegram...")
-        send_telegram(summary_markdown)
+        send_telegram(summary_markdown, telegram_token, telegram_chat_id)
 
         print("[INFO] Sending email...")
-        send_email(f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})", summary_markdown)
+        send_email(
+            f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})",
+            summary_markdown,
+            email_sender,
+            email_recipient,
+            gmail_app_password,
+        )
 
         print("[INFO] Saving edition and updating README...")
         edition_path = save_edition(public_repo_dir, date_str, summary_markdown)

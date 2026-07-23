@@ -4,7 +4,12 @@ on:
   schedule:
     # Every Monday at 11:00 UTC (08:00 BRT / UTC-3)
     - cron: "0 11 * * 1"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: only generate the summary (no Telegram/email, no push)"
+        required: false
+        default: "false"
 
 jobs:
   generate-and-publish-summary:
@@ -23,6 +28,7 @@ jobs:
 
       - name: Run collection, generation and distribution script
         env:
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -32,3 +38,10 @@ jobs:
           PAT_GITHUB: ${{ secrets.PAT_GITHUB }}
           PUBLIC_REPO_URL: ${{ secrets.PUBLIC_REPO_URL }}
         run: python script.py
+
+      - name: Upload dry-run summary as artifact
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-summary
+          path: dry_run_summary.md
