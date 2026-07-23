@@ -6,7 +6,8 @@ Flow:
   2. Reads sources.json from the cloned repository and collects content (RSS and HTML).
   3. Sends the raw content to Gemini, which generates the bilingual (PT-BR + English)
      weekly summary plus a short list of visual themes for the cover art.
-  4. Generates a cover illustration for the edition with Imagen, using those themes.
+  4. Generates a cover illustration for the edition via the free Pollinations.ai image
+     API, using those themes (no API key or billing required).
   5. Distributes the summary via Telegram and email.
   6. Saves the new edition to editions/YYYY-MM-DD.md (with the cover) and updates README.md.
   7. Commits and pushes the changes back to the public repository.
@@ -32,19 +33,20 @@ import time
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import feedparser
 import markdown as md_lib
 import requests
 from bs4 import BeautifulSoup
 from google import genai
-from google.genai import types
 
 from prompt import build_image_prompt, build_prompt
 
 GEMINI_MODEL = "gemini-flash-latest"
-IMAGE_MODEL = "gemini-2.5-flash-image"
+IMAGE_WIDTH = 1200
+IMAGE_HEIGHT = 675
+IMAGE_TIMEOUT = 60
 
 MAX_CHARS_PER_SOURCE = 4000
 MAX_RSS_ENTRIES_PER_SOURCE = 5
@@ -190,35 +192,25 @@ def extract_visual_themes(raw_summary):
     return summary_markdown, themes
 
 
-def generate_cover_image(api_key, visual_themes, output_path, max_attempts=2):
-    """Generates the edition's cover illustration and saves it to output_path.
+def generate_cover_image(visual_themes, output_path, max_attempts=2):
+    """Generates the edition's cover illustration via the free Pollinations.ai image API
+    and saves it to output_path.
 
-    Uses Gemini's native image output (generateContent with an IMAGE response
-    modality) rather than the separate Imagen "predict" API — the standalone Imagen
-    models are gated off for newer API keys, while the native Gemini image models are
-    available. Returns True on success, False on failure — a missing cover should never
-    abort the whole run, since the text summary is the primary deliverable, so failures
-    (including after retries) are caught and logged rather than raised.
+    No API key or billing needed — this replaces Gemini/Imagen for the cover, since
+    image generation there requires a paid Google AI Studio plan (the free tier's quota
+    for every image-capable model is 0). Returns True on success, False on failure — a
+    missing cover should never abort the whole run, since the text summary is the
+    primary deliverable, so failures (including after retries) are caught and logged
+    rather than raised.
     """
-    client = genai.Client(api_key=api_key)
+    url = f"https://image.pollinations.ai/prompt/{quote(build_image_prompt(visual_themes))}"
+    params = {"width": IMAGE_WIDTH, "height": IMAGE_HEIGHT, "nologo": "true"}
     for attempt in range(1, max_attempts + 1):
         try:
-            response = client.models.generate_content(
-                model=IMAGE_MODEL,
-                contents=build_image_prompt(visual_themes),
-                config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
-            )
-            image_bytes = None
-            for part in response.candidates[0].content.parts:
-                inline_data = getattr(part, "inline_data", None)
-                if inline_data and inline_data.data:
-                    image_bytes = inline_data.data
-                    break
-            if not image_bytes:
-                print("[WARNING] Image response contained no image data.", file=sys.stderr)
-                return False
+            response = requests.get(url, params=params, timeout=IMAGE_TIMEOUT)
+            response.raise_for_status()
             with open(output_path, "wb") as f:
-                f.write(image_bytes)
+                f.write(response.content)
             return True
         except Exception as error:
             if attempt == max_attempts:
@@ -451,9 +443,9 @@ def main():
         summary_markdown, visual_themes = extract_visual_themes(raw_summary)
         print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
 
-        print("[INFO] Generating cover image with Imagen...")
+        print("[INFO] Generating cover image with Pollinations...")
         cover_path = os.path.join(os.getcwd(), "dry_run_cover.jpg")
-        cover_ok = generate_cover_image(gemini_api_key, visual_themes, cover_path)
+        cover_ok = generate_cover_image(visual_themes, cover_path)
 
         output_path = os.path.join(os.getcwd(), "dry_run_summary.md")
         with open(output_path, "w", encoding="utf-8") as f:
@@ -504,12 +496,12 @@ def main():
         summary_markdown, visual_themes = extract_visual_themes(raw_summary)
         print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
 
-        print("[INFO] Generating cover image with Imagen...")
+        print("[INFO] Generating cover image with Pollinations...")
         editions_dir = os.path.join(public_repo_dir, "editions")
         os.makedirs(editions_dir, exist_ok=True)
         cover_file_name = f"cover-{date_str}.jpg"
         cover_abs_path = os.path.join(editions_dir, cover_file_name)
-        cover_ok = generate_cover_image(gemini_api_key, visual_themes, cover_abs_path)
+        cover_ok = generate_cover_image(visual_themes, cover_abs_path)
         cover_relative_path = f"editions/{cover_file_name}" if cover_ok else None
 
         if skip_notifications:

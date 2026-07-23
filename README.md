@@ -2,26 +2,27 @@
 
 Automation that collects Salesforce community blog/feed news, generates a bilingual
 (PT-BR + English) summary via Google Gemini (`gemini-flash-latest`) plus a cover
-illustration via Gemini's native image generation (`gemini-2.5-flash-image`),
+illustration via the free [Pollinations.ai](https://pollinations.ai) image API,
 distributes the summary via Telegram and email, and publishes the result (text + cover)
 to the public [`salesforce-news-community`](../salesforce-news-community) repository.
 
 Cadence isn't finalized yet — it currently runs biweekly (see the "Schedule" section
 below), not weekly.
 
-Uses the unified `google-genai` SDK (`from google import genai`) for both text and
-image generation — the older `google-generativeai` package doesn't support image
-generation. The cover is generated via `generate_content()` with an `IMAGE` response
-modality rather than the standalone Imagen "predict" API — the standalone Imagen models
-(`imagen-3.0-generate-002`, `imagen-4.0-generate-001`, ...) turned out to be gated off
-for newer API keys/projects, while Gemini's native image output isn't.
+Uses the unified `google-genai` SDK (`from google import genai`) for text generation
+only — the older `google-generativeai` package doesn't support the newer Gemini
+models we use, hence the migration. The cover does **not** go through
+Gemini/Imagen: every image-capable Gemini/Imagen model has a free-tier quota of 0
+(confirmed via testing — `imagen-3.0-generate-002`, `imagen-4.0-generate-001`, and
+`gemini-2.5-flash-image` all require a paid Google AI Studio plan), so the cover is
+generated via Pollinations.ai instead, which needs no API key or billing.
 
-The cover's visual theme is driven by the content itself: the same Gemini call that
-writes the summary also returns a short list of visual concepts extracted from that
-edition's news (see the `VISUAL_THEMES:` line handling in `prompt.py` / `script.py`),
-which get woven into the image prompt. If image generation fails for any reason (quota,
-model availability, etc.), the run continues without a cover — a missing image never
-blocks publishing the text summary.
+The cover's visual theme is still driven by the content itself: the same Gemini call
+that writes the summary also returns a short list of visual concepts extracted from
+that edition's news (see the `VISUAL_THEMES:` line handling in `prompt.py` /
+`script.py`), which get woven into the Pollinations prompt. If image generation fails
+for any reason, the run continues without a cover — a missing image never blocks
+publishing the text summary.
 
 ## Files
 
