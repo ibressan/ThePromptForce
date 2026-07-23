@@ -1,27 +1,27 @@
-name: Resumo Semanal Salesforce News
+name: Weekly Salesforce News Summary
 
 on:
   schedule:
-    # Toda segunda-feira às 11h UTC (08h BRT / UTC-3)
+    # Every Monday at 11:00 UTC (08:00 BRT / UTC-3)
     - cron: "0 11 * * 1"
   workflow_dispatch: {}
 
 jobs:
-  gerar-e-publicar-resumo:
+  generate-and-publish-summary:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do repositório privado (bot)
+      - name: Checkout private repository (bot)
         uses: actions/checkout@v4
 
-      - name: Configurar Python 3.11
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Instalar dependências
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Executar script de coleta, geração e distribuição
+      - name: Run collection, generation and distribution script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
