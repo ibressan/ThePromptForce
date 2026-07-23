@@ -27,7 +27,20 @@ email, and publishes the result to the public
 
 ## Manual run
 
-From GitHub: Actions → "Weekly Salesforce News Summary" → Run workflow.
+From GitHub: Actions → "Weekly Salesforce News Summary" → Run workflow, with optional inputs:
+
+- `dry_run: true` — only generates the summary (printed to the log and uploaded as an
+  artifact); does not touch Telegram, email, or the public repo. Only needs
+  `GEMINI_API_KEY` and `PUBLIC_REPO_URL`.
+- `skip_notifications: true` — generates the summary **and publishes it** to the public
+  repo (new file in `editions/`, updated `README.md`), but skips Telegram/email. Needs
+  `GEMINI_API_KEY`, `PAT_GITHUB` and `PUBLIC_REPO_URL` — the Telegram/Gmail secrets are
+  not required in this mode.
+- `list_models: true` — debug helper that lists the Gemini models available to the
+  configured API key and exits.
+
+With no inputs (or on the weekly schedule), it runs the full flow: generate, send to
+Telegram and email, and publish.
 
 Locally (requires the same environment variables exported):
 

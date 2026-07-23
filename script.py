@@ -300,6 +300,10 @@ def is_dry_run():
     return os.environ.get("DRY_RUN", "false").strip().lower() in ("1", "true", "yes")
 
 
+def is_skip_notifications():
+    return os.environ.get("SKIP_NOTIFICATIONS", "false").strip().lower() in ("1", "true", "yes")
+
+
 # --------------------------------------------------------------------------
 # Main execution
 # --------------------------------------------------------------------------
@@ -342,12 +346,17 @@ def main():
         print(f"\n[SUCCESS] Dry run finished. Summary saved to {output_path}.")
         return
 
-    telegram_token = require_env("TELEGRAM_TOKEN")
-    telegram_chat_id = require_env("TELEGRAM_CHAT_ID")
-    gmail_app_password = require_env("GMAIL_APP_PASSWORD")
-    email_sender = require_env("EMAIL_REMETENTE")
-    email_recipient = os.environ.get("EMAIL_DESTINATARIO", email_sender)
+    skip_notifications = is_skip_notifications()
     pat_github = require_env("PAT_GITHUB")
+
+    if skip_notifications:
+        print("[INFO] SKIP_NOTIFICATIONS is set — Telegram/email will not be sent.")
+    else:
+        telegram_token = require_env("TELEGRAM_TOKEN")
+        telegram_chat_id = require_env("TELEGRAM_CHAT_ID")
+        gmail_app_password = require_env("GMAIL_APP_PASSWORD")
+        email_sender = require_env("EMAIL_REMETENTE")
+        email_recipient = os.environ.get("EMAIL_DESTINATARIO", email_sender)
 
     public_repo_dir = tempfile.mkdtemp(prefix="salesforce-news-community-")
     try:
@@ -369,17 +378,20 @@ def main():
         print("[INFO] Generating summary with Gemini...")
         summary_markdown = generate_summary(raw_content, gemini_api_key)
 
-        print("[INFO] Sending to Telegram...")
-        send_telegram(summary_markdown, telegram_token, telegram_chat_id)
+        if skip_notifications:
+            print("[INFO] Skipping Telegram and email (SKIP_NOTIFICATIONS is set).")
+        else:
+            print("[INFO] Sending to Telegram...")
+            send_telegram(summary_markdown, telegram_token, telegram_chat_id)
 
-        print("[INFO] Sending email...")
-        send_email(
-            f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})",
-            summary_markdown,
-            email_sender,
-            email_recipient,
-            gmail_app_password,
-        )
+            print("[INFO] Sending email...")
+            send_email(
+                f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})",
+                summary_markdown,
+                email_sender,
+                email_recipient,
+                gmail_app_password,
+            )
 
         print("[INFO] Saving edition and updating README...")
         edition_path = save_edition(public_repo_dir, date_str, summary_markdown)
