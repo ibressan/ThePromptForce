@@ -20,57 +20,47 @@ A cada execução, um robô coleta as publicações mais recentes das fontes lis
 ### 🗞️ Última Edição
 
 <!-- SALESFORCE_NEWS_START -->
-### 🗓️ Edição de 2026-07-23 / Weekly Edition 2026-07-23
-
-![Cover](editions/cover-2026-07-23.jpg)
+### 🗓️ Edição de 2026-08-05 / Weekly Edition 2026-08-05
 
 ## 🇧🇷 Português
 
 ### 🚀 Novidades Técnicas
 
+#### Apex
+- **Skills de Contexto para a Metadata API**: A integração de contexto da Metadata API em assistentes de desenvolvimento de IA permite a geração de metadados e declarações de plataforma mais precisos, reduzindo falhas em compilações e validações de implantação. — 📅 30/07/2026 · 🔗 [Leia mais](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills)
+- **Otimização de Contexto para Agentes de IA com MCP+**: A camada de pós-processamento MCP+ intercepta as respostas de ferramentas do Model Context Protocol antes da entrega aos agentes. Essa abordagem filtra cargas úteis e reduz o consumo de tokens e custos de execução sem a necessidade de reescrever controladores Apex ou APIs legadas. — 📅 21/07/2026 · 🔗 [Leia mais](https://developer.salesforce.com/blogs/2026/07/get-started-with-precision-context-management-using-mcp)
+
 #### LWC (Lightning Web Components)
-- O **Salesforce Multi-Framework** atingiu disponibilidade geral (GA), permitindo a construção e implantação nativa de aplicações React na plataforma Salesforce com suporte nativo a autenticação, governança, operações de dados via GraphQL e invocação direta de métodos Apex — 📅 16/07/2026 · 🔗 [Leia mais](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga)
-
-#### Data Cloud
-- Análises de arquitetura no Data Cloud (Data 360) reforçam que as funcionalidades de unificação e resolução de identidade não substituem a necessidade de governança de dados, regras de *survivorship* e *stewardship* diretamente nos sistemas de origem — 📅 22/07/2026 · 🔗 [Leia mais](https://www.salesforceben.com/deduplication-and-data-cloud-you-have-an-architecture-problem/)
-
-#### Flow
-- A integração de **Hosted MCP Servers** com o Slackbot via Headless 360 permite a execução segura de Flows do Salesforce, consultas ao CRM e execução de queries no Tableau diretamente a partir de interfaces conversacionais — 📅 15/07/2026 · 🔗 [Leia mais](https://developer.salesforce.com/blogs/2026/07/connect-slack-to-salesforce-with-hosted-mcp-servers)
+- **Disponibilidade Geral (GA) do Salesforce Multi-Framework**: O Salesforce Multi-Framework alcançou GA, permitindo a execução nativa de aplicações React na plataforma sem a necessidade de implementar fluxos de autenticação customizados ou gerenciar tokens. A solução oferece suporte a manipulação de dados via GraphQL e chamadas diretas a controladores Apex. — 📅 23/07/2026 · 🔗 [Leia mais](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp)
 
 ### 💡 Impacto Prático
-
-A disponibilidade geral do Salesforce Multi-Framework altera a estratégia de desenvolvimento de interfaces customizadas, permitindo que equipes utilizem React nativamente sem recorrer a soluções não suportadas para contornar o container do Lightning. No ecossistema de integração e inteligência artificial, a maturidade do padrão Model Context Protocol (MCP) exige que arquitetos avaliem a eficiência da janela de contexto e o consumo de tokens ao expor rotinas em Flow e dados do CRM a agentes externos. Além disso, projetos de Data Cloud devem priorizar a higienização e governança preventiva de dados na origem, evitando falhas de confiabilidade ao depender exclusivamente da resolução automática de duplicatas.
+A disponibilidade geral do Multi-Framework amplia as opções arquiteturais no front-end da plataforma, permitindo reutilizar aplicações React existentes sem comprometer o modelo de segurança nativo do Salesforce. Paralelamente, a adoção de técnicas como MCP+ e Context Skills na Metadata API reflete uma transição clara para o desenvolvimento voltado a agentes de IA, onde o gerenciamento de contexto e o controle do consumo de tokens se tornam requisitos diretos de arquitetura. Arquitetos e desenvolvedores devem avaliar o impacto financeiro das chamadas de IA atuais e testar o padrão Multi-Framework em sandboxes para mapear regras de governança e migração da fase beta.
 
 ### 📖 Destaque de Leitura
-
-- [Architecting Secure Agent Connectivity: A Guide to Choosing Between MCP and APIs](https://www.salesforce.com/blog/architecting-secure-agent-connectivity-mcp-apis/) — 📅 22/07/2026 · Guia arquitetural focado nos critérios de decisão entre o uso de Model Context Protocol (MCP) e APIs REST tradicionais ao expor dados e automações do Salesforce para agentes de IA de terceiros.
-- [Build with React on Salesforce: Multi-Framework Is Now GA](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga) — 📅 16/07/2026 · Artigo técnico detalhando a transição do Multi-Framework para GA, incluindo padrões de segurança, operações GraphQL e procedimentos de migração do beta.
-- [Get Started with Precision Context Management Using MCP+](https://developer.salesforce.com/blogs/2026/07/get-started-with-precision-context-management-using-mcp) — 📅 21/07/2026 · Apresenta uma camada de pós-processamento para otimizar respostas de ferramentas MCP, otimizando o consumo de janela de contexto e reduzindo custos operacionais em LLMs.
+- [React no Salesforce: GA do Multi-Framework](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp) — 📅 23/07/2026 · Guia essencial detalhando a execução nativa de React na plataforma, invocação de controladores Apex e integração GraphQL sem infraestrutura de autenticação adicional.
+- [Gestão de Contexto de Precisão com MCP+](https://developer.salesforce.com/blogs/2026/07/get-started-with-precision-context-management-using-mcp) — 📅 21/07/2026 · Análise técnica sobre como interceptar e filtrar payloads de ferramentas MCP para otimizar custos com modelos de linguagem.
+- [Geração de Metadados Inteligente com Metadata API Context Skills](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills) — 📅 30/07/2026 · Explora o uso de contexto de metadados de orgs para eliminar erros de sintaxe e implantação em fluxos assistidos por IA.
 
 ## 🇺🇸 English
 
 ### 🚀 Technical News
 
+#### Apex
+- **Metadata API Context Skills for AI Development**: Grounding AI coding assistants with Metadata API context enables the generation of valid platform metadata definitions and payloads, significantly lowering deployment validation failures. — 📅 30/07/2026 · 🔗 [Read more](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills)
+- **Precision Context Management with MCP+**: The MCP+ post-processing layer intercepts Model Context Protocol tool responses before passing them to AI agents, filtering payloads to reduce token consumption and operational costs without requiring rewrites of underlying Apex services or APIs. — 📅 21/07/2026 · 🔗 [Read more](https://developer.salesforce.com/blogs/2026/07/get-started-with-precision-context-management-using-mcp)
+
 #### LWC (Lightning Web Components)
-- **Salesforce Multi-Framework** is now Generally Available (GA), enabling engineering teams to deploy production-ready React applications natively on Salesforce with built-in authentication, security governance, GraphQL data operations, and direct Apex execution — 📅 16/07/2026 · 🔗 [Read more](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga)
-
-#### Data Cloud
-- Architectural guidance for Data Cloud (Data 360) highlights that automated identity resolution and data activation cannot replace source-system data governance, survivorship rules, and data stewardship — 📅 22/07/2026 · 🔗 [Read more](https://www.salesforceben.com/deduplication-and-data-cloud-you-have-an-architecture-problem/)
-
-#### Flow
-- **Hosted MCP Servers** combined with Headless 360 allow Slackbot integrations to securely trigger Salesforce Flows, execute Tableau queries, and retrieve CRM records directly within conversational workflows — 📅 15/07/2026 · 🔗 [Read more](https://developer.salesforce.com/blogs/2026/07/connect-slack-to-salesforce-with-hosted-mcp-servers)
+- **Salesforce Multi-Framework General Availability (GA)**: Salesforce Multi-Framework is now GA, allowing teams to build native React applications on Salesforce without handling custom authentication or token management. The framework natively integrates GraphQL data operations and direct Apex invocations. — 📅 23/07/2026 · 🔗 [Read more](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp)
 
 ### 💡 Practical Impact
-
-The GA release of Salesforce Multi-Framework represents a shift in front-end architecture, allowing developers to build native React components on top of Salesforce core security without relying on container workaround hacks. As AI agent integration patterns standardize around Model Context Protocol (MCP), architects must establish strict controls over context window usage and payload optimization using tools like MCP+. Concurrently, Data Cloud implementations must emphasize upstream data hygiene rather than assuming automated identity resolution will resolve underlying duplicate data debt.
+The general availability of Multi-Framework expands front-end architectural choices on the platform, allowing engineering teams to reuse existing React components without compromising platform security or authentication boundaries. Simultaneously, adopting context interception like MCP+ and Metadata API Context Skills signals a shift toward agentic AI optimization, where controlling token overhead directly dictates operational viability. Solution architects should benchmark token efficiency across current agent workflows and evaluate React integration patterns in sandboxes ahead of enterprise deployment.
 
 ### 📖 Reading Highlight
+- [Building with React: Multi-Framework reaches GA](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp) — 📅 23/07/2026 · A crucial guide detailing native React execution on Salesforce, Apex controller invocation, GraphQL usage, and breaking changes from beta.
+- [Precision Context Management Using MCP+](https://developer.salesforce.com/blogs/2026/07/get-started-with-precision-context-management-using-mcp) — 📅 21/07/2026 · Must-read architectural deep dive into intercepting MCP responses to minimize token overhead in agent deployments.
+- [Build Smarter with Metadata API Context Skills](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills) — 📅 30/07/2026 · Explores how grounding AI assistants in org-specific metadata prevents deployment syntax errors.
 
-- [Architecting Secure Agent Connectivity: A Guide to Choosing Between MCP and APIs](https://www.salesforce.com/blog/architecting-secure-agent-connectivity-mcp-apis/) — 📅 22/07/2026 · An essential architectural breakdown comparing trade-offs between Model Context Protocol (MCP) and REST APIs when exposing enterprise CRM logic to external AI agents.
-- [Build with React on Salesforce: Multi-Framework Is Now GA](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga) — 📅 16/07/2026 · A deep dive into Multi-Framework reaching GA status, covering migration steps, GraphQL data fetching, and native platform security rules.
-- [Get Started with Precision Context Management Using MCP+](https://developer.salesforce.com/blogs/2026/07/get-started-with-precision-context-management-using-mcp) — 📅 21/07/2026 · Introduces a post-processing layer for MCP tool responses designed to filter unnecessary context and lower LLM token consumption.
-
-📄 [Ver esta edição no histórico / View this edition in the archive](editions/2026-07-23.md)
+📄 [Ver esta edição no histórico / View this edition in the archive](editions/2026-08-05.md)
 <!-- SALESFORCE_NEWS_END -->
 
 📂 Veja o histórico completo em [`editions/`](./editions/).
