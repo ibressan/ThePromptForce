@@ -393,15 +393,20 @@ def main():
         return
 
     skip_notifications = is_skip_notifications()
+    telegram_token = telegram_chat_id = gmail_app_password = email_sender = email_recipient = None
     if not dry_run:
         if skip_notifications:
             print("[INFO] SKIP_NOTIFICATIONS is set — Telegram/email will not be sent.")
         else:
-            telegram_token = require_env("TELEGRAM_TOKEN")
-            telegram_chat_id = require_env("TELEGRAM_CHAT_ID")
-            gmail_app_password = require_env("GMAIL_APP_PASSWORD")
-            email_sender = require_env("EMAIL_REMETENTE")
-            email_recipient = os.environ.get("EMAIL_DESTINATARIO", email_sender)
+            telegram_token = os.environ.get("TELEGRAM_TOKEN", "").strip() or None
+            telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip() or None
+            gmail_app_password = os.environ.get("GMAIL_APP_PASSWORD", "").strip() or None
+            email_sender = os.environ.get("EMAIL_REMETENTE", "").strip() or None
+            email_recipient = os.environ.get("EMAIL_DESTINATARIO", "").strip() or email_sender
+            if not telegram_token:
+                print("[INFO] TELEGRAM_TOKEN not set — Telegram notifications will be skipped.")
+            if not gmail_app_password:
+                print("[INFO] GMAIL_APP_PASSWORD not set — email notifications will be skipped.")
 
     print("[INFO] Loading sources...")
     sources = load_sources()
@@ -450,17 +455,23 @@ def main():
     if skip_notifications:
         print("[INFO] Skipping Telegram and email (SKIP_NOTIFICATIONS is set).")
     else:
-        print("[INFO] Sending to Telegram...")
-        send_telegram(summary_markdown, telegram_token, telegram_chat_id)
+        if telegram_token and telegram_chat_id:
+            print("[INFO] Sending to Telegram...")
+            send_telegram(summary_markdown, telegram_token, telegram_chat_id)
+        else:
+            print("[INFO] Skipping Telegram (credentials not configured).")
 
-        print("[INFO] Sending email...")
-        send_email(
-            f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})",
-            summary_markdown,
-            email_sender,
-            email_recipient,
-            gmail_app_password,
-        )
+        if gmail_app_password and email_sender:
+            print("[INFO] Sending email...")
+            send_email(
+                f"Salesforce News – Resumo Semanal / Weekly Summary ({date_str})",
+                summary_markdown,
+                email_sender,
+                email_recipient,
+                gmail_app_password,
+            )
+        else:
+            print("[INFO] Skipping email (credentials not configured).")
 
     print("[INFO] Saving edition and updating README...")
     edition_path = save_edition(date_str, summary_markdown, cover_relative_path)
