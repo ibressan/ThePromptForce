@@ -1,0 +1,86 @@
+@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap');
+@plugin '@tailwindcss/typography';
+
+:root {
+  --paper: #f7f2e7;
+  --paper-shade: #ece4d3;
+  --ink: #1b1a17;
+}
+
+html,
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: 'PT Serif', Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+.masthead-title {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+article h1,
+article h2,
+article h3,
+article h4 {
+  scroll-margin-top: 1.5rem;
+}
+
+article p {
+  text-align: justify;
+  hyphens: auto;
+}
+
+article blockquote {
+  font-style: italic;
+  border-left: 3px solid var(--ink);
+  padding-left: 1rem;
+}
+
+.rule {
+  border-top: 3px double var(--ink);
+}
+
+.rule-thin {
+  border-top: 1px solid var(--ink);
+}
+
+.paper-card {
+  background-color: var(--paper-shade);
+  border: 1px solid rgba(27, 26, 23, 0.2);
+}
+
+.link-underline {
+  text-decoration: underline;
+  text-decoration-color: rgba(27, 26, 23, 0.35);
+}
+
+.link-underline:hover {
+  text-decoration-color: var(--ink);
+}
+
+.lang-toggle-btn {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--ink);
+  background: transparent;
+  cursor: pointer;
+}
+
+.lang-toggle-btn.active {
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
+.lang-toggle-btn:first-child {
+  border-right: none;
+}
