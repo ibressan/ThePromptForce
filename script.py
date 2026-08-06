@@ -7,18 +7,19 @@ just checks the repo out, runs this script, and pushes back to itself — no sep
 repo, PAT, or cross-repo clone involved.
 
 Flow:
-  1. Reads sources.json (repo root) and collects content (RSS and HTML).
+  1. Reads sources.json (repo root) and collects content (RSS and HTML), including each
+     article's own image (og:image / media thumbnail / first inline <img>).
   2. Sends the raw content to Gemini, which generates the bilingual (PT-BR + English)
-     weekly summary plus a short list of visual themes for the cover art.
-  3. Generates a cover illustration for the edition via the free Pollinations.ai image
-     API, using those themes (no API key or billing required).
-  4. Distributes the summary via Telegram and email.
-  5. Saves the new edition to editions/YYYY-MM-DD.md (with the cover) and updates README.md.
-  6. Commits and pushes the changes.
+     weekly summary and picks one of those image URLs to use as the edition's cover.
+  3. Distributes the summary via Telegram and email.
+  4. Saves the new edition to editions/YYYY-MM-DD.md (with the cover) and updates README.md.
+  5. Commits and pushes the changes.
 
-Set DRY_RUN=true to only collect sources and generate the summary and cover (saved
-locally as dry_run_summary.md / dry_run_cover.jpg) without sending Telegram/email or
-committing/pushing anything.
+The cover is always a URL pointing back at the original article's image — nothing is
+generated or saved locally, so there's no image storage/hosting to maintain.
+
+Set DRY_RUN=true to only collect sources and generate the summary (saved locally as
+dry_run_summary.md) without sending Telegram/email or committing/pushing anything.
 
 Set SKIP_NOTIFICATIONS=true to generate and publish (commit/push) without sending
 Telegram/email.
@@ -37,7 +38,6 @@ import time
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from urllib.parse import quote
 
 import feedparser
 import markdown as md_lib
@@ -45,12 +45,9 @@ import requests
 from bs4 import BeautifulSoup
 from google import genai
 
-from prompt import build_image_prompt, build_prompt
+from prompt import build_prompt
 
 GEMINI_MODEL = "gemini-flash-latest"
-IMAGE_WIDTH = 1200
-IMAGE_HEIGHT = 675
-IMAGE_TIMEOUT = 60
 
 MAX_CHARS_PER_SOURCE = 4000
 MAX_RSS_ENTRIES_PER_SOURCE = 5
@@ -80,6 +77,49 @@ def entry_published_at(entry):
     return None
 
 
+def extract_rss_entry_image(entry):
+    """Best-effort extraction of an RSS/Atom entry's own illustrative image, checked in
+    order of reliability: standard media extensions, enclosure links, then the first
+    <img> inline in the summary/content HTML. Returns None if nothing is found."""
+    media_content = entry.get("media_content") or []
+    for media in media_content:
+        if media.get("url"):
+            return media["url"]
+
+    media_thumbnail = entry.get("media_thumbnail") or []
+    for media in media_thumbnail:
+        if media.get("url"):
+            return media["url"]
+
+    for link in entry.get("links", []) or []:
+        if str(link.get("rel")) == "enclosure" and str(link.get("type", "")).startswith("image/"):
+            return link.get("href")
+
+    html_blob = entry.get("summary", "") or entry.get("description", "")
+    for content_entry in entry.get("content", []) or []:
+        html_blob += content_entry.get("value", "")
+    img_tag = BeautifulSoup(html_blob, "html.parser").find("img")
+    if img_tag and img_tag.get("src"):
+        return img_tag["src"]
+
+    return None
+
+
+def extract_html_page_image(soup):
+    """Best-effort extraction of a scraped page's own image: og:image meta tag first
+    (most reliable, used by virtually every modern blog for link previews), falling back
+    to the first sizable inline <img>. Returns None if nothing is found."""
+    og_image = soup.find("meta", property="og:image")
+    if og_image and og_image.get("content"):
+        return og_image["content"]
+
+    img_tag = soup.find("img", src=True)
+    if img_tag:
+        return img_tag["src"]
+
+    return None
+
+
 def collect_rss(name, url, max_age_days=MAX_AGE_DAYS):
     """Extracts the most recent entries from an RSS/Atom feed, skipping ones older than max_age_days."""
     feed = feedparser.parse(url)
@@ -96,7 +136,10 @@ def collect_rss(name, url, max_age_days=MAX_AGE_DAYS):
         summary_html = entry.get("summary", "") or entry.get("description", "")
         summary_text = BeautifulSoup(summary_html, "html.parser").get_text(" ", strip=True)
         date_label = published_at.strftime("%Y-%m-%d") if published_at else "unknown"
-        parts.append(f"### {title}\nPublished: {date_label}\nLink: {link}\n{summary_text}")
+        image_url = extract_rss_entry_image(entry) or "none"
+        parts.append(
+            f"### {title}\nPublished: {date_label}\nLink: {link}\nImage: {image_url}\n{summary_text}"
+        )
     return "\n\n".join(parts)[:MAX_CHARS_PER_SOURCE]
 
 
@@ -109,10 +152,11 @@ def collect_html(name, url):
     response = requests.get(url, timeout=HTTP_TIMEOUT, headers={"User-Agent": "Mozilla/5.0"})
     response.raise_for_status()
     soup = BeautifulSoup(response.text, "html.parser")
+    image_url = extract_html_page_image(soup) or "none"
     for tag in soup(["script", "style", "nav", "footer", "header"]):
         tag.decompose()
     text = soup.get_text(" ", strip=True)
-    return f"Published: unknown\nLink: {url}\n{text}"[:MAX_CHARS_PER_SOURCE]
+    return f"Published: unknown\nLink: {url}\nImage: {image_url}\n{text}"[:MAX_CHARS_PER_SOURCE]
 
 
 def collect_all_sources(sources):
@@ -139,7 +183,7 @@ def collect_all_sources(sources):
 # --------------------------------------------------------------------------
 def generate_summary(raw_content, api_key, max_attempts=3):
     """Calls the Gemini API to generate the bilingual (PT-BR + English) weekly summary,
-    followed by a VISUAL_THEMES line (see extract_visual_themes).
+    followed by a COVER_IMAGE line (see extract_cover_image).
 
     Retries with backoff on transient server errors (e.g. 503 "high demand") — this call
     is the one step nothing else in the pipeline can proceed without, so it's worth
@@ -163,50 +207,25 @@ def generate_summary(raw_content, api_key, max_attempts=3):
             time.sleep(wait_seconds)
 
 
-def extract_visual_themes(raw_summary):
-    """Splits off the trailing 'VISUAL_THEMES: a, b, c' line from the generated summary.
+def extract_cover_image(raw_summary, raw_content):
+    """Splits off the trailing 'COVER_IMAGE: url' line from the generated summary.
 
-    Returns (summary_markdown, visual_themes_list). If the line isn't present, returns
-    the summary unchanged and an empty theme list (the cover prompt falls back to a
-    generic Salesforce theme in that case).
+    Returns (summary_markdown, cover_image_url_or_None). The URL is only trusted if it
+    literally appears in the raw content collected from the sources — this guards
+    against the model hallucinating a URL instead of picking one that was actually
+    offered to it.
     """
-    match = re.search(r"^VISUAL_THEMES:\s*(.+)$", raw_summary, re.MULTILINE)
+    match = re.search(r"^COVER_IMAGE:\s*(.+)$", raw_summary, re.MULTILINE)
+    summary_markdown = (
+        raw_summary[: match.start()].rstrip() if match else raw_summary.strip()
+    )
     if not match:
-        return raw_summary.strip(), []
-    themes = [t.strip() for t in match.group(1).split(",") if t.strip()]
-    summary_markdown = raw_summary[: match.start()].rstrip()
-    return summary_markdown, themes
+        return summary_markdown, None
 
-
-def generate_cover_image(visual_themes, output_path, max_attempts=2):
-    """Generates the edition's cover illustration via the free Pollinations.ai image API
-    and saves it to output_path.
-
-    No API key or billing needed — this replaces Gemini/Imagen for the cover, since
-    image generation there requires a paid Google AI Studio plan (the free tier's quota
-    for every image-capable model is 0). Returns True on success, False on failure — a
-    missing cover should never abort the whole run, since the text summary is the
-    primary deliverable, so failures (including after retries) are caught and logged
-    rather than raised.
-    """
-    url = f"https://image.pollinations.ai/prompt/{quote(build_image_prompt(visual_themes))}"
-    params = {"width": IMAGE_WIDTH, "height": IMAGE_HEIGHT, "nologo": "true"}
-    for attempt in range(1, max_attempts + 1):
-        try:
-            response = requests.get(url, params=params, timeout=IMAGE_TIMEOUT)
-            response.raise_for_status()
-            with open(output_path, "wb") as f:
-                f.write(response.content)
-            return True
-        except Exception as error:
-            if attempt == max_attempts:
-                print(f"[WARNING] Failed to generate cover image: {error}", file=sys.stderr)
-                return False
-            print(
-                f"[WARNING] Cover image attempt {attempt}/{max_attempts} failed: {error}. Retrying...",
-                file=sys.stderr,
-            )
-            time.sleep(10)
+    cover_url = match.group(1).strip()
+    if cover_url.lower() == "none" or cover_url not in raw_content:
+        return summary_markdown, None
+    return summary_markdown, cover_url
 
 
 def list_available_models(api_key):
@@ -296,14 +315,16 @@ def send_email(subject, markdown_content, sender, recipient, app_password):
 # --------------------------------------------------------------------------
 # Persistence (editions/, README.md, commit + push to this same repo)
 # --------------------------------------------------------------------------
-def save_edition(date_str, markdown_content, cover_relative_path=None):
-    """Saves the new edition's Markdown to editions/YYYY-MM-DD.md, with the cover on top if present."""
+def save_edition(date_str, markdown_content, cover_image_url=None):
+    """Saves the new edition's Markdown to editions/YYYY-MM-DD.md, with the cover on top
+    if present. The cover is always an external URL pointing back at the original
+    article's own image — nothing is downloaded or stored in this repo."""
     editions_dir = "editions"
     os.makedirs(editions_dir, exist_ok=True)
     file_name = f"{date_str}.md"
     file_path = os.path.join(editions_dir, file_name)
 
-    cover_markdown = f"![Cover]({os.path.basename(cover_relative_path)})\n\n" if cover_relative_path else ""
+    cover_markdown = f"![Cover]({cover_image_url})\n\n" if cover_image_url else ""
     header = cover_markdown + f"# Edição de {date_str} / Weekly Edition — {date_str}\n\n"
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(header + markdown_content + "\n")
@@ -311,13 +332,13 @@ def save_edition(date_str, markdown_content, cover_relative_path=None):
     return f"editions/{file_name}"
 
 
-def update_readme(date_str, markdown_content, relative_edition_path, cover_relative_path=None):
+def update_readme(date_str, markdown_content, relative_edition_path, cover_image_url=None):
     """Replaces the block between the markers in README.md with the latest edition."""
     readme_path = "README.md"
     with open(readme_path, "r", encoding="utf-8") as f:
         readme_content = f.read()
 
-    cover_markdown = f"![Cover]({cover_relative_path})\n\n" if cover_relative_path else ""
+    cover_markdown = f"![Cover]({cover_image_url})\n\n" if cover_image_url else ""
     new_block = (
         f"{MARKER_START}\n"
         f"### 🗓️ Edição de {date_str} / Weekly Edition {date_str}\n\n"
@@ -383,7 +404,10 @@ def main():
         print("[INFO] Skipping this run — cadence is biweekly and this isn't a scheduled week.")
         return
 
-    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date_str = (
+        os.environ.get("REGENERATE_DATE", "").strip()
+        or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    )
     dry_run = is_dry_run()
 
     gemini_api_key = require_env("GEMINI_API_KEY")
@@ -422,15 +446,11 @@ def main():
 
     print("[INFO] Generating summary with Gemini...")
     raw_summary = generate_summary(raw_content, gemini_api_key)
-    summary_markdown, visual_themes = extract_visual_themes(raw_summary)
-    print(f"[INFO] Visual themes for the cover: {visual_themes or '(none extracted)'}")
+    summary_markdown, cover_image_url = extract_cover_image(raw_summary, raw_content)
+    print(f"[INFO] Cover image: {cover_image_url or '(none chosen)'}")
 
     if dry_run:
         print("[INFO] DRY RUN — no Telegram/email will be sent, nothing will be committed.")
-        print("[INFO] Generating cover image with Pollinations...")
-        cover_path = os.path.join(os.getcwd(), "dry_run_cover.jpg")
-        cover_ok = generate_cover_image(visual_themes, cover_path)
-
         output_path = os.path.join(os.getcwd(), "dry_run_summary.md")
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(summary_markdown)
@@ -440,17 +460,7 @@ def main():
         print("=" * 80 + "\n")
         print(summary_markdown)
         print(f"\n[SUCCESS] Dry run finished. Summary saved to {output_path}.")
-        if cover_ok:
-            print(f"[SUCCESS] Cover image saved to {cover_path}.")
-        else:
-            print("[WARNING] Cover image was not generated (see warning above).")
         return
-
-    print("[INFO] Generating cover image with Pollinations...")
-    os.makedirs("editions", exist_ok=True)
-    cover_file_name = f"cover-{date_str}.jpg"
-    cover_ok = generate_cover_image(visual_themes, os.path.join("editions", cover_file_name))
-    cover_relative_path = f"editions/{cover_file_name}" if cover_ok else None
 
     if skip_notifications:
         print("[INFO] Skipping Telegram and email (SKIP_NOTIFICATIONS is set).")
@@ -474,8 +484,8 @@ def main():
             print("[INFO] Skipping email (credentials not configured).")
 
     print("[INFO] Saving edition and updating README...")
-    edition_path = save_edition(date_str, summary_markdown, cover_relative_path)
-    update_readme(date_str, summary_markdown, edition_path, cover_relative_path)
+    edition_path = save_edition(date_str, summary_markdown, cover_image_url)
+    update_readme(date_str, summary_markdown, edition_path, cover_image_url)
 
     print("[INFO] Publishing...")
     commit_and_push(date_str)

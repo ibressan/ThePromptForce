@@ -30,6 +30,11 @@
       "name": "Salesforce Developers Blog",
       "url": "https://developer.salesforce.com/blogs/feed",
       "type": "rss"
+    },
+    {
+      "name": "Salesforce Admins",
+      "url": "https://admin.salesforce.com/feed",
+      "type": "rss"
     }
   ]
 }

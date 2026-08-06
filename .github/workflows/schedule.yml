@@ -21,6 +21,10 @@ on:
         description: "Publish only: generate and commit, but skip Telegram/email"
         required: false
         default: "false"
+      regenerate_date:
+        description: "Overwrite an existing edition instead of creating today's (format YYYY-MM-DD)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -45,6 +49,7 @@ jobs:
           DRY_RUN: ${{ github.event.inputs.dry_run }}
           LIST_MODELS: ${{ github.event.inputs.list_models }}
           SKIP_NOTIFICATIONS: ${{ github.event.inputs.skip_notifications }}
+          REGENERATE_DATE: ${{ github.event.inputs.regenerate_date }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
