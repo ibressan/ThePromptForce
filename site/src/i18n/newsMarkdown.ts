@@ -63,3 +63,20 @@ export const extractLeadParagraph = (body: string): string => {
   const match = body.match(/###\s*🚀[^\n]*\n+([^\n]+(?:\n(?!\n|#)[^\n]+)*)/);
   return match ? stripMarkdown(match[1]) : '';
 };
+
+/**
+ * Extracts the content under a "#### {label}" topic heading (e.g. "Apex",
+ * "Data Cloud"), up to the next heading of level 2-4 or the end of the body.
+ * Used to build the per-category pages without needing separate files per
+ * topic — the source edition already groups items this way.
+ */
+export const extractCategorySection = (
+  body: string,
+  label: string,
+): string => {
+  const pattern = new RegExp(
+    `####\\s*${label}[^\\n]*\\n+([\\s\\S]*?)(?=\\n#{2,4}\\s|$)`,
+  );
+  const match = body.match(pattern);
+  return match ? match[1].trim() : '';
+};
