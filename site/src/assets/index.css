@@ -129,6 +129,11 @@ article blockquote {
   border-color: var(--accent);
 }
 
+.surface-card-translucent {
+  background-color: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
 .link-underline {
   text-decoration: underline;
   text-decoration-color: var(--line);

@@ -100,7 +100,7 @@ const EditionPage = () => {
       )}
 
       {!error && content !== null && (
-        <div className="surface-card p-5 sm:p-8">
+        <div className="surface-card surface-card-translucent p-5 sm:p-8">
           <article className="prose max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]}>
               {content}
