@@ -66,6 +66,29 @@ article blockquote {
   padding-left: 1rem;
 }
 
+/* @tailwindcss/typography hardcodes its own light-mode gray palette via
+   these variables, unaware of our [data-theme] toggle — without this
+   override, article text renders near-black on our dark background.
+   Values mirror the plugin's own dark ("prose-invert") palette. */
+[data-theme='dark'] .prose {
+  --tw-prose-body: #d1d5db;
+  --tw-prose-headings: #ffffff;
+  --tw-prose-lead: #9ca3af;
+  --tw-prose-links: #ffffff;
+  --tw-prose-bold: #ffffff;
+  --tw-prose-counters: #9ca3af;
+  --tw-prose-bullets: #4b5563;
+  --tw-prose-hr: #374151;
+  --tw-prose-quotes: #f3f4f6;
+  --tw-prose-quote-borders: #374151;
+  --tw-prose-captions: #9ca3af;
+  --tw-prose-code: #ffffff;
+  --tw-prose-pre-code: #d1d5db;
+  --tw-prose-pre-bg: rgb(0 0 0 / 50%);
+  --tw-prose-th-borders: #4b5563;
+  --tw-prose-td-borders: #374151;
+}
+
 /* Small monospace label with a leading slash + number, e.g. "/00 Capa" —
    used in the nav and as section markers throughout. */
 .tag-number {
