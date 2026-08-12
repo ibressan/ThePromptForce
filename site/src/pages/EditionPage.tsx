@@ -100,11 +100,13 @@ const EditionPage = () => {
       )}
 
       {!error && content !== null && (
-        <article className="prose max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]}>
-            {content}
-          </ReactMarkdown>
-        </article>
+        <div className="surface-card p-5 sm:p-8">
+          <article className="prose max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]}>
+              {content}
+            </ReactMarkdown>
+          </article>
+        </div>
       )}
     </Layout>
   );
