@@ -64,12 +64,12 @@ const EditionPage = () => {
       )}
 
       {!error && content !== null && toc.length > 0 && (
-        <nav className="not-prose surface-card mb-8 p-5 flex items-stretch gap-6">
+        <nav className="not-prose surface-card mb-8 p-5 flex items-center gap-6">
           <img
             src="/salesforce-news/mascote/mascote-toc.png"
             alt=""
             aria-hidden="true"
-            className="hidden sm:block shrink-0 self-stretch w-40 sm:w-52 object-contain"
+            className="hidden sm:block shrink-0 w-24 sm:w-28 object-contain"
           />
 
           <div className="flex-1">
