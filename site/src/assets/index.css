@@ -20,14 +20,14 @@
   --accent: #4bb4ff;
 }
 
-html,
-body {
+html {
   background-color: var(--bg);
-  color: var(--ink);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 body {
+  color: var(--ink);
+  transition: color 0.15s ease;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
