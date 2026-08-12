@@ -64,7 +64,7 @@ const EditionPage = () => {
       )}
 
       {!error && content !== null && toc.length > 0 && (
-        <nav className="not-prose surface-card mb-8 p-5 flex items-center gap-6">
+        <nav className="not-prose surface-card surface-card-translucent mb-8 p-5 flex items-center gap-6">
           <img
             src="/salesforce-news/mascote/mascote-toc.png"
             alt=""
