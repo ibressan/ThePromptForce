@@ -64,15 +64,15 @@ const EditionPage = () => {
       )}
 
       {!error && content !== null && toc.length > 0 && (
-        <nav className="not-prose surface-card mb-8 p-5 flex items-center gap-5">
+        <nav className="not-prose surface-card mb-8 p-5 flex items-stretch gap-6">
           <img
             src="/salesforce-news/mascote/mascote-toc.png"
             alt=""
             aria-hidden="true"
-            className="hidden sm:block w-24 shrink-0"
+            className="hidden sm:block shrink-0 self-stretch w-40 sm:w-52 object-contain"
           />
 
-          <div>
+          <div className="flex-1">
             <div className="tag-number mb-3">{t('inThisEdition').toUpperCase()}</div>
             <ul className="text-sm space-y-1.5">
               {toc.map((item, index) => (

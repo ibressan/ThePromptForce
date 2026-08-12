@@ -32,7 +32,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
         src="/salesforce-news/mascote/mascote-bg.png"
         alt=""
         aria-hidden="true"
-        className="absolute bottom-0 left-0 w-[320px] sm:w-[440px] opacity-[0.35] pointer-events-none select-none -z-10"
+        className="fixed bottom-0 left-0 w-[320px] sm:w-[440px] opacity-[0.5] pointer-events-none select-none -z-10"
       />
 
       <header className="sticky top-0 z-20 bg-[var(--bg)]/90 backdrop-blur border-b border-[var(--line)]">
