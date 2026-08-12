@@ -45,7 +45,7 @@ const AboutPage = () => {
         </span>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:gap-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-8">
         <img
           src="/salesforce-news/mascote/mascote-about.png"
           alt="Mascote Salesforce News"
