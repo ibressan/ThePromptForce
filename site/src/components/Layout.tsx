@@ -27,7 +27,14 @@ const Layout = ({ children }: { children: ReactNode }) => {
     setTheme((current) => (current === 'light' ? 'dark' : 'light'));
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <img
+        src="/salesforce-news/mascote/mascote-bg.png"
+        alt=""
+        aria-hidden="true"
+        className="fixed bottom-0 right-0 w-[280px] sm:w-[380px] opacity-[0.06] pointer-events-none select-none -z-10"
+      />
+
       <header className="sticky top-0 z-20 bg-[var(--bg)]/90 backdrop-blur border-b border-[var(--line)]">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-8">
           <Link to="/" className="font-bold text-sm shrink-0">

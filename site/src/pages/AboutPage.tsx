@@ -44,11 +44,20 @@ const AboutPage = () => {
           {language === 'pt' ? 'SOBRE' : 'ABOUT'}
         </span>
       </div>
-      <h1 className="text-3xl sm:text-4xl font-extrabold mb-6">
-        {t('aboutTitle')}
-      </h1>
 
-      <article className="prose max-w-none mb-10 font-serif-body">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:gap-8">
+        <img
+          src="/salesforce-news/mascote/mascote-about.png"
+          alt="Mascote Salesforce News"
+          className="w-40 sm:w-56 shrink-0 mx-auto sm:mx-0 mb-4 sm:mb-0"
+        />
+
+        <div className="flex-1">
+          <h1 className="text-3xl sm:text-4xl font-extrabold mb-6">
+            {t('aboutTitle')}
+          </h1>
+
+          <article className="prose max-w-none font-serif-body">
         {language === 'pt' ? (
           <>
             <p>
@@ -111,9 +120,11 @@ const AboutPage = () => {
             </p>
           </>
         )}
-      </article>
+          </article>
+        </div>
+      </div>
 
-      <div className="rule mb-6" />
+      <div className="rule mb-6 mt-10" />
       <h2 className="text-2xl font-extrabold mb-4">{t('sourcesTitle')}</h2>
       <ul className="space-y-2">
         {sources.map((source) => (
