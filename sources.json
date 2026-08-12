@@ -35,6 +35,11 @@
       "name": "Salesforce Admins",
       "url": "https://admin.salesforce.com/feed",
       "type": "rss"
+    },
+    {
+      "name": "Radar Salesforce (Guilherme Dornelas)",
+      "url": "https://guilhermedornelas.com.br/feed.xml",
+      "type": "rss"
     }
   ]
 }

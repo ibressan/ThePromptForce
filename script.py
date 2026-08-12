@@ -387,23 +387,10 @@ def is_skip_notifications():
     return os.environ.get("SKIP_NOTIFICATIONS", "false").strip().lower() in ("1", "true", "yes")
 
 
-def is_biweekly_scheduled_week(reference_date=None):
-    """GitHub Actions cron can't express "every 2 weeks" directly, so the workflow still
-    fires every Monday and this gates it down to a biweekly cadence: only even ISO week
-    numbers actually run. The parity is arbitrary — flip the "== 0" to "== 1" to shift
-    which Mondays get skipped."""
-    reference_date = reference_date or datetime.now(timezone.utc)
-    return reference_date.isocalendar().week % 2 == 0
-
-
 # --------------------------------------------------------------------------
 # Main execution
 # --------------------------------------------------------------------------
 def main():
-    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not is_biweekly_scheduled_week():
-        print("[INFO] Skipping this run — cadence is biweekly and this isn't a scheduled week.")
-        return
-
     date_str = (
         os.environ.get("REGENERATE_DATE", "").strip()
         or datetime.now(timezone.utc).strftime("%Y-%m-%d")

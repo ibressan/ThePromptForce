@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import Layout from '../components/Layout';
 import { useLanguage } from '../i18n/LanguageContext';
-import { splitEditionByLanguage } from '../i18n/newsMarkdown';
+import { splitEditionByLanguage, buildEditionTitle } from '../i18n/newsMarkdown';
 import { extractToc } from '../i18n/toc';
 
 const REPO = 'ibressan/salesforce-news';
@@ -41,10 +41,11 @@ const EditionPage = () => {
   }, [date]);
 
   const content = useMemo(() => {
-    if (rawContent === null) return null;
-    const { title, body } = splitEditionByLanguage(rawContent, language);
+    if (rawContent === null || !date) return null;
+    const { body } = splitEditionByLanguage(rawContent, language);
+    const title = buildEditionTitle(date, language, t);
     return `# ${title}\n\n${body}`;
-  }, [rawContent, language]);
+  }, [rawContent, language, date, t]);
 
   const toc = useMemo(() => (content ? extractToc(content) : []), [content]);
 

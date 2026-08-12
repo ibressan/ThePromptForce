@@ -4,7 +4,6 @@ const PT_HEADER = /^##\s+🇧🇷.*$/m;
 const EN_HEADER = /^##\s+🇺🇸.*$/m;
 
 interface SplitEdition {
-  title: string;
   body: string;
 }
 
@@ -17,10 +16,6 @@ export const splitEditionByLanguage = (
   content: string,
   language: Language,
 ): SplitEdition => {
-  const titleLine = content.match(/^#\s+(.+)$/m)?.[1] ?? '';
-  const [ptTitle, enTitle] = titleLine.split(/\s*\/\s*/);
-  const title = language === 'en' ? enTitle || titleLine : ptTitle || titleLine;
-
   const ptStart = content.search(PT_HEADER);
   const enStart = content.search(EN_HEADER);
 
@@ -31,12 +26,35 @@ export const splitEditionByLanguage = (
         ? content.slice(ptStart, enStart)
         : content.slice(enStart);
     // Drops the "## 🇧🇷 Português" / "## 🇺🇸 English" header line itself,
-    // since the caller already renders its own title above the body.
-    body = body.replace(/^##\s+.*$\n*/, '');
+    // since the caller already renders its own title above the body and the
+    // language is already implied by the PT/EN toggle. (".*$" without the
+    // multiline flag never matched past the line's newline, so this used to
+    // silently leave the flag+language heading in the rendered body.)
+    body = body.replace(/^##\s+[^\n]*\n*/, '');
   }
 
-  return { title, body: body.trim() };
+  return { body: body.trim() };
 };
+
+/** Localized "DD Mon YYYY" formatting for an edition's date (YYYY-MM-DD). */
+export const formatEditionDate = (dateStr: string, language: Language): string =>
+  new Date(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+
+/**
+ * Builds the edition title from its date rather than parsing the raw
+ * markdown H1 — the generated H1 packed both languages onto one line
+ * ("Edição de 2026-08-05 / Weekly Edition — 2026-08-05"), which showed an
+ * unlocalized ISO date and a stray em dash regardless of language.
+ */
+export const buildEditionTitle = (
+  dateStr: string,
+  language: Language,
+  t: (key: string) => string,
+): string => t('editionTitle').replace('{date}', formatEditionDate(dateStr, language));
 
 export const stripMarkdown = (text: string): string =>
   text

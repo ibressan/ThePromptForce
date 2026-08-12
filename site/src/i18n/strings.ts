@@ -17,6 +17,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     sourcesTitle: 'Fontes consultadas',
     noCategoryItems: 'Nenhuma matéria sobre este tópico ainda.',
     readMore: 'Ler na edição completa →',
+    editionTitle: 'Edição de {date}',
   },
   en: {
     back: 'Back',
@@ -34,5 +35,6 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     sourcesTitle: 'Sources consulted',
     noCategoryItems: 'No story on this topic yet.',
     readMore: 'Read in the full edition →',
+    editionTitle: 'Weekly Edition of {date}',
   },
 };

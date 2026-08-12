@@ -10,7 +10,7 @@ import {
   extractCategorySection,
   estimateReadMinutes,
   extractSources,
-  stripMarkdown,
+  buildEditionTitle,
 } from '../i18n/newsMarkdown';
 
 const REPO = 'ibressan/salesforce-news';
@@ -80,13 +80,13 @@ const FrontPage = () => {
   }, []);
 
   const editions: Edition[] = rawEditions.map(({ date, rawContent }) => {
-    const { title, body } = splitEditionByLanguage(rawContent, language);
+    const { body } = splitEditionByLanguage(rawContent, language);
     const tags = CATEGORIES.filter(
       (c) => extractCategorySection(body, c.label).length > 0,
     ).map((c) => c.label);
     return {
       date,
-      title: stripMarkdown(title),
+      title: buildEditionTitle(date, language, t),
       excerpt: extractLeadParagraph(body),
       cover: extractCoverImage(rawContent),
       tags,

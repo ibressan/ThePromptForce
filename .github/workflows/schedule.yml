@@ -2,10 +2,7 @@ name: Salesforce News Summary
 
 on:
   schedule:
-    # Fires every Monday at 11:00 UTC (08:00 BRT / UTC-3), but script.py's
-    # is_biweekly_scheduled_week() skips odd ISO weeks — net effect: runs biweekly.
-    # Cadence isn't final yet; change the gating logic in script.py if this becomes
-    # weekly again, no need to touch this cron expression.
+    # Fires every Monday at 11:00 UTC (08:00 BRT / UTC-3) — weekly.
     - cron: "0 11 * * 1"
   workflow_dispatch:
     inputs:
