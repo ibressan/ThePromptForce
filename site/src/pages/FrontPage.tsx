@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { formatDistance } from 'date-fns';
-import { ptBR, enUS } from 'date-fns/locale';
 import Layout from '../components/Layout';
 import { useLanguage } from '../i18n/LanguageContext';
+import { CATEGORIES } from '../i18n/categories';
 import {
   splitEditionByLanguage,
   extractCoverImage,
   extractLeadParagraph,
+  extractCategorySection,
+  estimateReadMinutes,
+  extractSources,
   stripMarkdown,
 } from '../i18n/newsMarkdown';
 
@@ -24,8 +26,18 @@ interface Edition {
   title: string;
   excerpt: string;
   cover?: string;
+  tags: string[];
+  readMinutes: number;
+  sources: string[];
   publishedAt: Date;
 }
+
+const formatDate = (d: Date, language: string) =>
+  d.toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 
 const FrontPage = () => {
   const { language, t } = useLanguage();
@@ -69,52 +81,94 @@ const FrontPage = () => {
 
   const editions: Edition[] = rawEditions.map(({ date, rawContent }) => {
     const { title, body } = splitEditionByLanguage(rawContent, language);
+    const tags = CATEGORIES.filter(
+      (c) => extractCategorySection(body, c.label).length > 0,
+    ).map((c) => c.label);
     return {
       date,
       title: stripMarkdown(title),
       excerpt: extractLeadParagraph(body),
       cover: extractCoverImage(rawContent),
+      tags,
+      readMinutes: estimateReadMinutes(body),
+      sources: extractSources(body),
       publishedAt: new Date(date),
     };
   });
 
   const [lead, ...rest] = editions;
-  const dateLocale = language === 'pt' ? ptBR : enUS;
+  const total = editions.length;
 
   return (
     <Layout>
-      {loading && <p className="text-center opacity-70">{t('loading')}</p>}
+      <div className="mb-10">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="status-dot" />
+          <span className="tag-number">SALESFORCE NEWS</span>
+        </div>
+        <div className="font-mono text-xs text-[var(--accent)] mb-2">
+          {language === 'pt'
+            ? '// Resumo editorial do ecossistema Salesforce'
+            : '// Editorial digest of the Salesforce ecosystem'}
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight">
+          {language === 'pt' ? (
+            <>
+              O que importa no <span className="text-[var(--accent)]">Salesforce</span>{' '}
+              esta semana.
+            </>
+          ) : (
+            <>
+              What matters in <span className="text-[var(--accent)]">Salesforce</span>{' '}
+              this week.
+            </>
+          )}
+        </h1>
+      </div>
+
+      {loading && <p className="text-[var(--ink-soft)]">{t('loading')}</p>}
       {!loading && error && (
-        <p className="text-center opacity-70">{t('editionLoadError')}</p>
+        <p className="text-[var(--ink-soft)]">{t('editionLoadError')}</p>
       )}
       {!loading && !error && editions.length === 0 && (
-        <p className="text-center opacity-70">{t('noEditions')}</p>
+        <p className="text-[var(--ink-soft)]">{t('noEditions')}</p>
       )}
 
       {lead && (
-        <Link to={`/edition/${lead.date}`} className="block group mb-10">
-          {lead.cover && (
-            <img
-              src={lead.cover}
-              alt={lead.title}
-              className="w-full h-64 sm:h-80 object-cover mb-4 grayscale-[15%]"
-            />
-          )}
-          <div className="text-xs uppercase tracking-widest opacity-60 mb-2">
-            {t('latestEdition')} ·{' '}
-            {formatDistance(lead.publishedAt, new Date(), {
-              addSuffix: true,
-              locale: dateLocale,
-            })}
+        <Link
+          to={`/edition/${lead.date}`}
+          className="group grid sm:grid-cols-[1fr_auto] gap-6 surface-card p-5 sm:p-6 mb-10 transition-colors"
+        >
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {lead.tags.map((tag) => (
+                <span key={tag} className="tag-pill">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold leading-snug group-hover:text-[var(--accent)]">
+              {lead.title}
+            </h2>
+            <p className="font-serif-body mt-3 text-[var(--ink-soft)] leading-relaxed">
+              {lead.excerpt}
+            </p>
+            <div className="mt-4 font-mono text-xs text-[var(--ink-soft)] flex flex-wrap items-center gap-2">
+              <span>{formatDate(lead.publishedAt, language)}</span>
+              <span>·</span>
+              <span>{lead.readMinutes} min</span>
+              {lead.sources.length > 0 && (
+                <>
+                  <span>·</span>
+                  <span>via {lead.sources.slice(0, 2).join(', ')}</span>
+                </>
+              )}
+            </div>
           </div>
-          <h1 className="masthead-title text-3xl sm:text-4xl leading-tight group-hover:underline">
-            {lead.title}
-          </h1>
-          <p className="mt-3 text-base sm:text-lg leading-relaxed">
-            {lead.excerpt}
-          </p>
-          <div className="mt-2 text-sm link-underline font-semibold">
-            {t('readFullEdition')} →
+          <div className="hidden sm:flex items-start justify-end">
+            <span className="font-mono text-4xl text-[var(--line)] group-hover:text-[var(--accent)] transition-colors">
+              {String(total).padStart(2, '0')}
+            </span>
           </div>
         </Link>
       )}
@@ -122,35 +176,39 @@ const FrontPage = () => {
       {rest.length > 0 && (
         <>
           <div className="rule mb-6" />
-          <div className="text-xs uppercase tracking-widest opacity-60 mb-4">
-            {t('allEditions')}
-          </div>
-          <div className="grid sm:grid-cols-2 gap-8">
-            {rest.map((edition) => (
+          <div className="tag-number mb-4">{t('allEditions').toUpperCase()}</div>
+          <div className="space-y-6">
+            {rest.map((edition, index) => (
               <Link
                 key={edition.date}
                 to={`/edition/${edition.date}`}
-                className="block group"
+                className="group grid sm:grid-cols-[1fr_auto] gap-6 surface-card p-5 transition-colors"
               >
-                {edition.cover && (
-                  <img
-                    src={edition.cover}
-                    alt={edition.title}
-                    className="w-full h-36 object-cover mb-2 grayscale-[15%]"
-                  />
-                )}
-                <div className="text-xs uppercase tracking-widest opacity-60 mb-1">
-                  {formatDistance(edition.publishedAt, new Date(), {
-                    addSuffix: true,
-                    locale: dateLocale,
-                  })}
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    {edition.tags.map((tag) => (
+                      <span key={tag} className="tag-pill">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                  <h3 className="text-lg font-bold leading-snug group-hover:text-[var(--accent)]">
+                    {edition.title}
+                  </h3>
+                  <p className="font-serif-body mt-2 text-sm text-[var(--ink-soft)] leading-relaxed">
+                    {edition.excerpt}
+                  </p>
+                  <div className="mt-3 font-mono text-xs text-[var(--ink-soft)] flex flex-wrap items-center gap-2">
+                    <span>{formatDate(edition.publishedAt, language)}</span>
+                    <span>·</span>
+                    <span>{edition.readMinutes} min</span>
+                  </div>
                 </div>
-                <h2 className="masthead-title text-xl leading-snug group-hover:underline">
-                  {edition.title}
-                </h2>
-                <p className="mt-1 text-sm leading-relaxed opacity-80">
-                  {edition.excerpt}
-                </p>
+                <div className="hidden sm:flex items-start justify-end">
+                  <span className="font-mono text-2xl text-[var(--line)] group-hover:text-[var(--accent)] transition-colors">
+                    {String(total - index - 1).padStart(2, '0')}
+                  </span>
+                </div>
               </Link>
             ))}
           </div>

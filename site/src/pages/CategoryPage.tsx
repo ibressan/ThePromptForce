@@ -76,27 +76,30 @@ const CategoryPage = () => {
   if (!category) {
     return (
       <Layout>
-        <p className="opacity-70">{t('editionLoadError')}</p>
+        <p className="text-[var(--ink-soft)]">{t('editionLoadError')}</p>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <h1 className="masthead-title text-3xl sm:text-4xl mb-8">
+      <div className="tag-pill inline-block mb-3">#{category.label}</div>
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-8">
         {category.label}
       </h1>
 
-      {loading && <p className="opacity-70">{t('loading')}</p>}
-      {!loading && error && <p className="opacity-70">{t('editionLoadError')}</p>}
+      {loading && <p className="text-[var(--ink-soft)]">{t('loading')}</p>}
+      {!loading && error && (
+        <p className="text-[var(--ink-soft)]">{t('editionLoadError')}</p>
+      )}
       {!loading && !error && items.length === 0 && (
-        <p className="opacity-70">{t('noCategoryItems')}</p>
+        <p className="text-[var(--ink-soft)]">{t('noCategoryItems')}</p>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {items.map((item) => (
-          <div key={item.date} className="rule-thin border-t-0 pt-6 first:pt-0 first:border-0">
-            <div className="text-xs uppercase tracking-widest opacity-60 mb-2">
+          <div key={item.date} className="surface-card p-5">
+            <div className="font-mono text-xs text-[var(--ink-soft)] mb-2">
               {formatDistance(item.publishedAt, new Date(), {
                 addSuffix: true,
                 locale: dateLocale,
@@ -109,7 +112,7 @@ const CategoryPage = () => {
             </div>
             <Link
               to={`/edition/${item.date}`}
-              className="link-underline text-sm font-semibold"
+              className="link-underline text-sm font-semibold text-[var(--accent)]"
             >
               {t('readMore')}
             </Link>

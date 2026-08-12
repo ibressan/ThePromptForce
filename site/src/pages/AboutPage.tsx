@@ -38,11 +38,12 @@ const AboutPage = () => {
 
   return (
     <Layout>
-      <h1 className="masthead-title text-3xl sm:text-4xl mb-6">
+      <div className="tag-number mb-3">/07</div>
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-6">
         {t('aboutTitle')}
       </h1>
 
-      <article className="prose max-w-none mb-10">
+      <article className="prose max-w-none mb-10 font-serif-body">
         {language === 'pt' ? (
           <>
             <p>
@@ -108,13 +109,11 @@ const AboutPage = () => {
       </article>
 
       <div className="rule mb-6" />
-      <h2 className="masthead-title text-2xl mb-4">{t('sourcesTitle')}</h2>
+      <h2 className="text-2xl font-extrabold mb-4">{t('sourcesTitle')}</h2>
       <ul className="space-y-2">
         {sources.map((source) => (
           <li key={source.url} className="flex items-baseline gap-2">
-            <span className="text-xs uppercase tracking-widest opacity-50">
-              {source.type}
-            </span>
+            <span className="tag-pill">{source.type}</span>
             <a
               href={toHomepage(source.url)}
               target="_blank"

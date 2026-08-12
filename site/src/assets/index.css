@@ -1,84 +1,125 @@
 @import 'tailwindcss';
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @plugin '@tailwindcss/typography';
 
 :root {
-  --paper: #f7f2e7;
-  --paper-shade: #ece4d3;
-  --ink: #1b1a17;
+  --bg: #ffffff;
+  --bg-shade: #f6f7f9;
+  --ink: #14171f;
+  --ink-soft: rgba(20, 23, 31, 0.6);
+  --line: rgba(20, 23, 31, 0.12);
+  --accent: #0176d3;
 }
 
 html,
 body {
-  background-color: var(--paper);
+  background-color: var(--bg);
   color: var(--ink);
 }
 
 body {
-  font-family: 'PT Serif', Georgia, serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 h1,
 h2,
 h3,
-h4,
-.masthead-title {
-  font-family: 'Playfair Display', Georgia, serif;
+h4 {
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.font-serif-body {
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 article h1,
 article h2,
 article h3,
 article h4 {
-  scroll-margin-top: 1.5rem;
+  scroll-margin-top: 5.5rem;
 }
 
 article p {
-  text-align: justify;
-  hyphens: auto;
+  font-family: 'Source Serif 4', Georgia, serif;
+  line-height: 1.75;
 }
 
 article blockquote {
   font-style: italic;
-  border-left: 3px solid var(--ink);
+  border-left: 3px solid var(--accent);
   padding-left: 1rem;
 }
 
+/* Small monospace label with a leading slash + number, e.g. "/00 Capa" —
+   used in the nav and as section markers throughout. */
+.tag-number {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
+/* Status-badge dot + label, e.g. "● Salesforce News" */
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--accent);
+}
+
+.tag-pill {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+}
+
 .rule {
-  border-top: 3px double var(--ink);
+  border-top: 1px solid var(--line);
 }
 
-.rule-thin {
-  border-top: 1px solid var(--ink);
+.surface-card {
+  background-color: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
 }
 
-.paper-card {
-  background-color: var(--paper-shade);
-  border: 1px solid rgba(27, 26, 23, 0.2);
+.surface-card:hover {
+  border-color: var(--accent);
 }
 
 .link-underline {
   text-decoration: underline;
-  text-decoration-color: rgba(27, 26, 23, 0.35);
+  text-decoration-color: var(--line);
 }
 
 .link-underline:hover {
-  text-decoration-color: var(--ink);
+  text-decoration-color: var(--accent);
 }
 
 .lang-toggle-btn {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 700;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid var(--ink);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--line);
   background: transparent;
   cursor: pointer;
+  color: var(--ink-soft);
 }
 
 .lang-toggle-btn.active {
-  background-color: var(--ink);
-  color: var(--paper);
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
 }
 
 .lang-toggle-btn:first-child {

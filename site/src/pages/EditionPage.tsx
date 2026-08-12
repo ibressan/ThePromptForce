@@ -50,20 +50,23 @@ const EditionPage = () => {
 
   return (
     <Layout>
-      <Link to="/" className="link-underline text-sm inline-block mb-6">
-        ← {t('backToFrontPage')}
+      <Link
+        to="/"
+        className="link-underline text-sm inline-flex items-baseline gap-1.5 mb-8"
+      >
+        <span className="tag-number">/00</span> {t('backToFrontPage')}
       </Link>
 
-      {error && <p className="opacity-70">{t('editionLoadError')}</p>}
+      {error && <p className="text-[var(--ink-soft)]">{t('editionLoadError')}</p>}
 
-      {!error && content === null && <p className="opacity-70">{t('loading')}</p>}
+      {!error && content === null && (
+        <p className="text-[var(--ink-soft)]">{t('loading')}</p>
+      )}
 
       {!error && content !== null && toc.length > 0 && (
-        <nav className="not-prose paper-card mb-8 p-5">
-          <div className="font-semibold text-sm opacity-70 mb-2">
-            {t('inThisEdition')}
-          </div>
-          <ul className="text-sm space-y-1">
+        <nav className="not-prose surface-card mb-8 p-5">
+          <div className="tag-number mb-3">{t('inThisEdition').toUpperCase()}</div>
+          <ul className="text-sm space-y-1.5">
             {toc.map((item, index) => (
               <li key={index} className={item.level === 4 ? 'ml-4' : 'font-medium'}>
                 <a

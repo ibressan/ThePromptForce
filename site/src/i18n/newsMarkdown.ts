@@ -80,3 +80,41 @@ export const extractCategorySection = (
   const match = body.match(pattern);
   return match ? match[1].trim() : '';
 };
+
+/** Rough reading-time estimate (~200 words/min), minimum 1 minute. */
+export const estimateReadMinutes = (text: string): number => {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+};
+
+const SOURCE_NAMES: Record<string, string> = {
+  'salesforceben.com': 'Salesforce Ben',
+  'apexhours.com': 'Apex Hours',
+  'salesforce.com': 'Salesforce Blog',
+  'sfdcstop.blogspot.com': 'SFDC Stop',
+  'automationchampion.com': 'Automation Champion',
+  'developer.salesforce.com': 'Salesforce Developer Blog',
+  'admin.salesforce.com': 'Salesforce Admins',
+};
+
+/** Extracts the friendly names of the sources linked in the body (dedup, in
+ * first-seen order), for the "via X, Y" byline. */
+export const extractSources = (body: string): string[] => {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  const linkRegex = /\[[^\]]+\]\((https?:\/\/[^)]+)\)/g;
+  let match;
+  while ((match = linkRegex.exec(body)) !== null) {
+    try {
+      const host = new URL(match[1]).hostname.replace(/^www\./, '');
+      const name = SOURCE_NAMES[host] ?? host;
+      if (!seen.has(name)) {
+        seen.add(name);
+        names.push(name);
+      }
+    } catch {
+      // ignore malformed URLs
+    }
+  }
+  return names;
+};
