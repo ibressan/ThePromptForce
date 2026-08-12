@@ -137,7 +137,7 @@ const FrontPage = () => {
       {lead && (
         <Link
           to={`/edition/${lead.date}`}
-          className="group grid sm:grid-cols-[1fr_auto] gap-6 surface-card p-5 sm:p-6 mb-10 transition-colors"
+          className="group grid sm:grid-cols-[1fr_auto] gap-6 surface-card surface-card-translucent p-5 sm:p-6 mb-10 transition-colors"
         >
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -182,7 +182,7 @@ const FrontPage = () => {
               <Link
                 key={edition.date}
                 to={`/edition/${edition.date}`}
-                className="group grid sm:grid-cols-[1fr_auto] gap-6 surface-card p-5 transition-colors"
+                className="group grid sm:grid-cols-[1fr_auto] gap-6 surface-card surface-card-translucent p-5 transition-colors"
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-2">

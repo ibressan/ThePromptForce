@@ -98,7 +98,7 @@ const CategoryPage = () => {
 
       <div className="space-y-6">
         {items.map((item) => (
-          <div key={item.date} className="surface-card p-5">
+          <div key={item.date} className="surface-card surface-card-translucent p-5">
             <div className="font-mono text-xs text-[var(--ink-soft)] mb-2">
               {formatDistance(item.publishedAt, new Date(), {
                 addSuffix: true,
