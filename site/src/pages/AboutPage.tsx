@@ -124,7 +124,43 @@ const AboutPage = () => {
         </div>
       </div>
 
-      <div className="rule mb-6 mt-10" />
+      <div className="rule mb-10 mt-10" />
+
+      <div className="flex flex-col sm:flex-row-reverse sm:items-center sm:gap-8 mb-10">
+        <img
+          src="/salesforce-news/mascote/mascote-coppy.png"
+          alt="Coppy, o mascote do Salesforce News"
+          className="w-40 sm:w-56 shrink-0 mx-auto sm:mx-0 mb-4 sm:mb-0"
+        />
+
+        <div className="flex-1">
+          <h2 className="text-2xl font-extrabold mb-4">
+            {language === 'pt' ? 'Quem é o Coppy?' : 'Meet Coppy'}
+          </h2>
+          <article className="prose max-w-none font-serif-body">
+            {language === 'pt' ? (
+              <p>
+                <strong>Coppy</strong> é o mascote do Salesforce News — uma
+                capivara Trailblazer que mistura <em>code</em>, <em>copy</em>{' '}
+                e um pouco de <em>happy</em>. Ele representa bem o espírito do
+                projeto: ler tudo que sai sobre o ecossistema Salesforce e
+                devolver em forma de resumo editorial, direto ao ponto.
+              </p>
+            ) : (
+              <p>
+                <strong>Coppy</strong> is the Salesforce News mascot — a
+                Trailblazer capybara mixing <em>code</em>, <em>copy</em>, and
+                a bit of <em>happy</em>. He's a fitting stand-in for what
+                this project does: read everything coming out of the
+                Salesforce ecosystem and hand it back as a straight-to-the-
+                point editorial digest.
+              </p>
+            )}
+          </article>
+        </div>
+      </div>
+
+      <div className="rule mb-6" />
       <h2 className="text-2xl font-extrabold mb-4">{t('sourcesTitle')}</h2>
       <ul className="space-y-2">
         {sources.map((source) => (
