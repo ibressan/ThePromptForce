@@ -64,29 +64,38 @@ const EditionPage = () => {
       )}
 
       {!error && content !== null && toc.length > 0 && (
-        <nav className="not-prose surface-card mb-8 p-5">
-          <div className="tag-number mb-3">{t('inThisEdition').toUpperCase()}</div>
-          <ul className="text-sm space-y-1.5">
-            {toc.map((item, index) => (
-              <li key={index} className={item.level === 4 ? 'ml-4' : 'font-medium'}>
-                <a
-                  href={`#${item.slug}`}
-                  className="link-underline"
-                  onClick={(e) => {
-                    // Plain hash navigation would be swallowed by the
-                    // app's HashRouter (it treats the URL hash as the
-                    // route) — scroll manually instead.
-                    e.preventDefault();
-                    document
-                      .getElementById(item.slug)
-                      ?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  {item.text}
-                </a>
-              </li>
-            ))}
-          </ul>
+        <nav className="not-prose surface-card mb-8 p-5 flex items-center gap-5">
+          <img
+            src="/salesforce-news/mascote/mascote-toc.png"
+            alt=""
+            aria-hidden="true"
+            className="hidden sm:block w-24 shrink-0"
+          />
+
+          <div>
+            <div className="tag-number mb-3">{t('inThisEdition').toUpperCase()}</div>
+            <ul className="text-sm space-y-1.5">
+              {toc.map((item, index) => (
+                <li key={index} className={item.level === 4 ? 'ml-4' : 'font-medium'}>
+                  <a
+                    href={`#${item.slug}`}
+                    className="link-underline"
+                    onClick={(e) => {
+                      // Plain hash navigation would be swallowed by the
+                      // app's HashRouter (it treats the URL hash as the
+                      // route) — scroll manually instead.
+                      e.preventDefault();
+                      document
+                        .getElementById(item.slug)
+                        ?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    {item.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </nav>
       )}
 
