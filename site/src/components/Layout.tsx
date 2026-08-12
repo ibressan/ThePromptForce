@@ -32,12 +32,13 @@ const Layout = ({ children }: { children: ReactNode }) => {
         src="/salesforce-news/mascote/mascote-bg.png"
         alt=""
         aria-hidden="true"
-        className="fixed bottom-0 right-0 w-[280px] sm:w-[380px] opacity-[0.06] pointer-events-none select-none -z-10"
+        className="fixed bottom-0 right-0 w-[320px] sm:w-[440px] opacity-[0.15] pointer-events-none select-none -z-10"
       />
 
       <header className="sticky top-0 z-20 bg-[var(--bg)]/90 backdrop-blur border-b border-[var(--line)]">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-8">
-          <Link to="/" className="font-bold text-sm shrink-0">
+          <Link to="/" className="font-bold text-sm shrink-0 flex items-center gap-2">
+            <img src="/salesforce-news/favicon-32x32.png" alt="" className="w-5 h-5" />
             Salesforce News
           </Link>
 
