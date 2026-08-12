@@ -126,7 +126,7 @@ const AboutPage = () => {
 
       <div className="rule mb-10 mt-10" />
 
-      <div className="flex flex-col sm:flex-row-reverse sm:items-center sm:gap-8 mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-8 mb-10">
         <img
           src="/salesforce-news/mascote/mascote-coppy.png"
           alt="Coppy, o mascote do Salesforce News"
