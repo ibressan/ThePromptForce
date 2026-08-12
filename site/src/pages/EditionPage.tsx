@@ -54,7 +54,7 @@ const EditionPage = () => {
         to="/"
         className="link-underline text-sm inline-flex items-baseline gap-1.5 mb-8"
       >
-        <span className="tag-number">/00</span> {t('backToFrontPage')}
+        <span className="font-mono">←</span> {t('backToFrontPage')}
       </Link>
 
       {error && <p className="text-[var(--ink-soft)]">{t('editionLoadError')}</p>}

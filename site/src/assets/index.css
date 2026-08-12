@@ -11,10 +11,20 @@
   --accent: #0176d3;
 }
 
+:root[data-theme='dark'] {
+  --bg: #0e1116;
+  --bg-shade: #161a21;
+  --ink: #eef0f3;
+  --ink-soft: rgba(238, 240, 243, 0.6);
+  --line: rgba(238, 240, 243, 0.14);
+  --accent: #4bb4ff;
+}
+
 html,
 body {
   background-color: var(--bg);
   color: var(--ink);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 body {

@@ -1,7 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PiSunBold, PiMoonBold } from 'react-icons/pi';
 import { useLanguage } from '../i18n/LanguageContext';
 import { CATEGORIES } from '../i18n/categories';
+
+const THEME_STORAGE_KEY = 'salesforce-news-theme';
 
 const NAV_LINKS = [
   { to: '/', labelPt: 'Capa', labelEn: 'Front Page' },
@@ -11,6 +14,17 @@ const NAV_LINKS = [
 
 const Layout = ({ children }: { children: ReactNode }) => {
   const { language, setLanguage } = useLanguage();
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    () => (localStorage.getItem(THEME_STORAGE_KEY) as 'light' | 'dark') || 'light',
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = () =>
+    setTheme((current) => (current === 'light' ? 'dark' : 'light'));
 
   return (
     <div className="min-h-screen">
@@ -21,34 +35,41 @@ const Layout = ({ children }: { children: ReactNode }) => {
           </Link>
 
           <nav className="hidden md:flex items-center gap-5 overflow-x-auto">
-            {NAV_LINKS.map((link, index) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="whitespace-nowrap text-sm text-[var(--ink-soft)] hover:text-[var(--ink)] flex items-baseline gap-1.5"
+                className="whitespace-nowrap text-sm text-[var(--ink-soft)] hover:text-[var(--ink)] flex items-center gap-1.5"
               >
-                <span className="tag-number">
-                  /{String(index).padStart(2, '0')}
-                </span>
+                <span className="status-dot" />
                 {language === 'pt' ? link.labelPt : link.labelEn}
               </Link>
             ))}
           </nav>
 
-          <div className="flex ml-auto shrink-0">
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="flex">
+              <button
+                className={`lang-toggle-btn ${language === 'pt' ? 'active' : ''}`}
+                onClick={() => setLanguage('pt')}
+                aria-label="Português"
+              >
+                PT
+              </button>
+              <button
+                className={`lang-toggle-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => setLanguage('en')}
+                aria-label="English"
+              >
+                EN
+              </button>
+            </div>
             <button
-              className={`lang-toggle-btn ${language === 'pt' ? 'active' : ''}`}
-              onClick={() => setLanguage('pt')}
-              aria-label="Português"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--accent)]"
             >
-              PT
-            </button>
-            <button
-              className={`lang-toggle-btn ${language === 'en' ? 'active' : ''}`}
-              onClick={() => setLanguage('en')}
-              aria-label="English"
-            >
-              EN
+              {theme === 'dark' ? <PiSunBold /> : <PiMoonBold />}
             </button>
           </div>
         </div>

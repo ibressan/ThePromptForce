@@ -38,7 +38,12 @@ const AboutPage = () => {
 
   return (
     <Layout>
-      <div className="tag-number mb-3">/07</div>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="status-dot" />
+        <span className="tag-number">
+          {language === 'pt' ? 'SOBRE' : 'ABOUT'}
+        </span>
+      </div>
       <h1 className="text-3xl sm:text-4xl font-extrabold mb-6">
         {t('aboutTitle')}
       </h1>
