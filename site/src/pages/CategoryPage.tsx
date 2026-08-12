@@ -8,14 +8,7 @@ import Layout from '../components/Layout';
 import { useLanguage } from '../i18n/LanguageContext';
 import { CATEGORIES } from '../i18n/categories';
 import { splitEditionByLanguage, extractCategorySection } from '../i18n/newsMarkdown';
-
-const REPO = 'ibressan/salesforce-news';
-const EDITIONS_PATH = 'editions';
-
-interface GitHubContentEntry {
-  name: string;
-  download_url: string;
-}
+import { fetchAllEditions } from '../i18n/fetchEditions';
 
 interface CategoryItem {
   date: string;
@@ -40,25 +33,12 @@ const CategoryPage = () => {
 
     const fetchItems = async () => {
       try {
-        const res = await fetch(
-          `https://api.github.com/repos/${REPO}/contents/${EDITIONS_PATH}`,
-        );
-        const files: GitHubContentEntry[] = await res.json();
-
-        const mdFiles = files
-          .filter((f) => f.name.endsWith('.md'))
-          .sort((a, b) => b.name.localeCompare(a.name));
-
-        const parsed = await Promise.all(
-          mdFiles.map(async (file) => {
-            const date = file.name.replace('.md', '');
-            const contentRes = await fetch(file.download_url);
-            const rawContent = await contentRes.text();
-            const { body } = splitEditionByLanguage(rawContent, language);
-            const content = extractCategorySection(body, category.label);
-            return { date, content, publishedAt: new Date(date) };
-          }),
-        );
+        const rawEditions = await fetchAllEditions();
+        const parsed = rawEditions.map(({ date, rawContent }) => {
+          const { body } = splitEditionByLanguage(rawContent, language);
+          const content = extractCategorySection(body, category.label);
+          return { date, content, publishedAt: new Date(date) };
+        });
 
         setItems(parsed.filter((item) => item.content));
       } catch {

@@ -329,7 +329,30 @@ def save_edition(date_str, markdown_content, cover_image_url=None):
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(header + markdown_content + "\n")
 
+    update_editions_index(editions_dir)
+
     return f"editions/{file_name}"
+
+
+def update_editions_index(editions_dir="editions"):
+    """Regenerates editions/index.json — a flat list of edition dates, newest
+    first. The site's frontend reads this instead of the GitHub Contents API
+    to list editions, since that API is rate-limited to 60 unauthenticated
+    requests/hour per client IP (shared by every visitor behind the same
+    NAT/proxy) and starts failing site-wide once exhausted; a static JSON
+    file served from raw.githubusercontent.com has no such limit."""
+    dates = sorted(
+        (
+            name[:-3]
+            for name in os.listdir(editions_dir)
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}\.md", name)
+        ),
+        reverse=True,
+    )
+    index_path = os.path.join(editions_dir, "index.json")
+    with open(index_path, "w", encoding="utf-8") as f:
+        json.dump({"editions": dates}, f, indent=2)
+        f.write("\n")
 
 
 def update_readme(date_str, markdown_content, relative_edition_path, cover_image_url=None):

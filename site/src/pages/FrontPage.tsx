@@ -12,14 +12,7 @@ import {
   extractSources,
   buildEditionTitle,
 } from '../i18n/newsMarkdown';
-
-const REPO = 'ibressan/salesforce-news';
-const EDITIONS_PATH = 'editions';
-
-interface GitHubContentEntry {
-  name: string;
-  download_url: string;
-}
+import { fetchAllEditions } from '../i18n/fetchEditions';
 
 interface Edition {
   date: string;
@@ -50,25 +43,7 @@ const FrontPage = () => {
   useEffect(() => {
     const fetchEditions = async () => {
       try {
-        const res = await fetch(
-          `https://api.github.com/repos/${REPO}/contents/${EDITIONS_PATH}`,
-        );
-        const files: GitHubContentEntry[] = await res.json();
-
-        const mdFiles = files
-          .filter((f) => f.name.endsWith('.md'))
-          .sort((a, b) => b.name.localeCompare(a.name));
-
-        const parsed = await Promise.all(
-          mdFiles.map(async (file) => {
-            const date = file.name.replace('.md', '');
-            const contentRes = await fetch(file.download_url);
-            const rawContent = await contentRes.text();
-            return { date, rawContent };
-          }),
-        );
-
-        setRawEditions(parsed);
+        setRawEditions(await fetchAllEditions());
       } catch {
         setError(true);
       } finally {
