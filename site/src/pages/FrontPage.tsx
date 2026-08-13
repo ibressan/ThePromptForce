@@ -17,11 +17,12 @@ import { fetchAllBlogPosts } from '../i18n/fetchBlogPosts';
 import { blogExcerpt } from '../i18n/blogMarkdown';
 import { FeedItem, mergeAndSortFeed } from '../i18n/feed';
 import { AUTHOR_NAMES } from '../i18n/authors';
+import { parseLocalDate } from '../i18n/date';
 
 type Mode = 'all' | 'news' | 'blog';
 
 const formatDate = (dateStr: string, language: string) =>
-  new Date(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
+  parseLocalDate(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

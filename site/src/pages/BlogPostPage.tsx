@@ -10,11 +10,12 @@ import { AUTHOR_NAMES } from '../i18n/authors';
 import { CONTENT_BASE } from '../i18n/repo';
 import { slugifyCategory } from '../i18n/feed';
 import ShareButtons from '../components/ShareButtons';
+import { parseLocalDate } from '../i18n/date';
 
 const RAW_BASE = `${CONTENT_BASE}blog/`;
 
 const formatPostDate = (dateStr: string, language: string) =>
-  new Date(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
+  parseLocalDate(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

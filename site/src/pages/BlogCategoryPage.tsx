@@ -8,6 +8,7 @@ import { fetchAllBlogPosts, RawBlogPost } from '../i18n/fetchBlogPosts';
 import { blogExcerpt } from '../i18n/blogMarkdown';
 import { slugifyCategory } from '../i18n/feed';
 import { AUTHOR_NAMES } from '../i18n/authors';
+import { parseLocalDate } from '../i18n/date';
 
 const BlogCategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -60,7 +61,7 @@ const BlogCategoryPage = () => {
               <span>{AUTHOR_NAMES[post.frontmatter.author]}</span>
               <span>·</span>
               <span>
-                {formatDistance(new Date(post.frontmatter.date), new Date(), {
+                {formatDistance(parseLocalDate(post.frontmatter.date), new Date(), {
                   addSuffix: true,
                   locale: dateLocale,
                 })}

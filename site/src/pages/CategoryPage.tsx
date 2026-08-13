@@ -9,6 +9,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { CATEGORIES } from '../i18n/categories';
 import { splitEditionByLanguage, extractCategorySection } from '../i18n/newsMarkdown';
 import { fetchAllEditions } from '../i18n/fetchEditions';
+import { parseLocalDate } from '../i18n/date';
 
 interface CategoryItem {
   date: string;
@@ -37,7 +38,7 @@ const CategoryPage = () => {
         const parsed = rawEditions.map(({ date, rawContent }) => {
           const { body } = splitEditionByLanguage(rawContent, language);
           const content = extractCategorySection(body, category.label);
-          return { date, content, publishedAt: new Date(date) };
+          return { date, content, publishedAt: parseLocalDate(date) };
         });
 
         setItems(parsed.filter((item) => item.content));

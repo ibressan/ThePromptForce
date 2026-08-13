@@ -1,4 +1,5 @@
 import { Language } from './strings';
+import { parseLocalDate } from './date';
 
 const PT_HEADER = /^##\s+🇧🇷.*$/m;
 const EN_HEADER = /^##\s+🇺🇸.*$/m;
@@ -38,7 +39,7 @@ export const splitEditionByLanguage = (
 
 /** Localized "DD Mon YYYY" formatting for an edition's date (YYYY-MM-DD). */
 export const formatEditionDate = (dateStr: string, language: Language): string =>
-  new Date(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
+  parseLocalDate(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
