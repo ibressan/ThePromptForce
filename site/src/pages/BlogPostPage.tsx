@@ -9,6 +9,7 @@ import { parseBlogPost, ParsedBlogPost } from '../i18n/blogMarkdown';
 import { AUTHOR_NAMES } from '../i18n/authors';
 import { CONTENT_BASE } from '../i18n/repo';
 import { slugifyCategory } from '../i18n/feed';
+import ShareButtons from '../components/ShareButtons';
 
 const RAW_BASE = `${CONTENT_BASE}blog/`;
 
@@ -53,12 +54,18 @@ const BlogPostPage = () => {
 
   return (
     <Layout>
-      <Link
-        to="/blog"
-        className="link-underline text-sm inline-flex items-baseline gap-1.5 mb-8"
-      >
-        <span className="font-mono">←</span> {t('backToBlog')}
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <Link
+          to="/blog"
+          className="link-underline text-sm inline-flex items-baseline gap-1.5"
+        >
+          <span className="font-mono">←</span> {t('backToBlog')}
+        </Link>
+
+        {!error && post !== null && (
+          <ShareButtons title={post.frontmatter.title} url={window.location.href} />
+        )}
+      </div>
 
       {error && <p className="text-[var(--ink-soft)]">{t('blogLoadError')}</p>}
       {!error && post === null && <p className="text-[var(--ink-soft)]">{t('loading')}</p>}

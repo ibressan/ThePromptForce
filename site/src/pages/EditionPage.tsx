@@ -5,8 +5,13 @@ import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import Layout from '../components/Layout';
 import { useLanguage } from '../i18n/LanguageContext';
-import { splitEditionByLanguage, buildEditionTitle } from '../i18n/newsMarkdown';
+import {
+  splitEditionByLanguage,
+  buildEditionTitle,
+  estimateReadMinutes,
+} from '../i18n/newsMarkdown';
 import { extractToc } from '../i18n/toc';
+import ShareButtons from '../components/ShareButtons';
 
 import { CONTENT_BASE } from '../i18n/repo';
 
@@ -41,23 +46,49 @@ const EditionPage = () => {
       .catch(() => setError(true));
   }, [date]);
 
+  const body = useMemo(() => {
+    if (rawContent === null) return null;
+    return splitEditionByLanguage(rawContent, language).body;
+  }, [rawContent, language]);
+
   const content = useMemo(() => {
-    if (rawContent === null || !date) return null;
-    const { body } = splitEditionByLanguage(rawContent, language);
+    if (body === null || !date) return null;
     const title = buildEditionTitle(date, language, t);
     return `# ${title}\n\n${body}`;
-  }, [rawContent, language, date, t]);
+  }, [body, language, date, t]);
+
+  const readMinutes = useMemo(() => (body ? estimateReadMinutes(body) : 0), [body]);
 
   const toc = useMemo(() => (content ? extractToc(content) : []), [content]);
+  const editionTitle = date ? buildEditionTitle(date, language, t) : '';
 
   return (
     <Layout>
-      <Link
-        to="/news"
-        className="link-underline text-sm inline-flex items-baseline gap-1.5 mb-8"
-      >
-        <span className="font-mono">←</span> {t('backToFrontPage')}
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <Link
+          to="/news"
+          className="link-underline text-sm inline-flex items-baseline gap-1.5"
+        >
+          <span className="font-mono">←</span> {t('backToFrontPage')}
+        </Link>
+
+        {!error && content !== null && (
+          <ShareButtons title={editionTitle} url={window.location.href} />
+        )}
+      </div>
+
+      {!error && content !== null && (
+        <div className="flex items-center gap-2.5 mb-8">
+          <img
+            src="/ThePromptForce/apple-touch-icon.png"
+            alt="Cappy"
+            className="w-9 h-9 rounded-full object-cover border border-[var(--line)]"
+          />
+          <span className="font-mono text-xs text-[var(--ink-soft)]">
+            {t('writtenBy').replace('{name}', 'Cappy')} · {readMinutes} min
+          </span>
+        </div>
+      )}
 
       {error && <p className="text-[var(--ink-soft)]">{t('editionLoadError')}</p>}
 
