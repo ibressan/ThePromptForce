@@ -8,9 +8,9 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { splitEditionByLanguage, buildEditionTitle } from '../i18n/newsMarkdown';
 import { extractToc } from '../i18n/toc';
 
-import { RAW_BASE as REPO_RAW_BASE } from '../i18n/repo';
+import { CONTENT_BASE } from '../i18n/repo';
 
-const RAW_BASE = `${REPO_RAW_BASE}editions/`;
+const RAW_BASE = `${CONTENT_BASE}news/editions/`;
 
 const EditionPage = () => {
   const { date } = useParams<{ date: string }>();

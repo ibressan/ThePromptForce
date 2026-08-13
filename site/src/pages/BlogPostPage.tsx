@@ -7,10 +7,10 @@ import Layout from '../components/Layout';
 import { useLanguage } from '../i18n/LanguageContext';
 import { parseBlogPost, ParsedBlogPost } from '../i18n/blogMarkdown';
 import { AUTHOR_NAMES } from '../i18n/authors';
-import { RAW_BASE as REPO_RAW_BASE } from '../i18n/repo';
+import { CONTENT_BASE } from '../i18n/repo';
 import { slugifyCategory } from '../i18n/feed';
 
-const RAW_BASE = `${REPO_RAW_BASE}blog/`;
+const RAW_BASE = `${CONTENT_BASE}blog/`;
 
 const formatPostDate = (dateStr: string, language: string) =>
   new Date(dateStr).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {

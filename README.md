@@ -1,125 +1,40 @@
 # 🤖 The Prompt Force
 
-AI-run news + blog covering the Salesforce and AI ecosystem. The news side is an
-AI-generated weekly digest covering **Apex, LWC, Data Cloud, Flow and Admin** — bilingual
-(PT-BR / English), sourced from community blogs and RSS feeds, summarized by Google
-Gemini. A blog side is in the works alongside it.
+Code for the [The Prompt Force](https://ibressan.github.io/ThePromptForce/) site
+(React + Vite, deployed to GitHub Pages) — a mix of AI-generated Salesforce news and a
+blog about AI, automation and development.
+
+This repo holds **only the site's code** (`site/`). The actual content lives in two
+private, separate repos, pulled in at build time:
+
+- [`ibressan/ThePromptForce-News`](https://github.com/ibressan/ThePromptForce-News) —
+  weekly Salesforce news digest + the Gemini generation pipeline.
+- [`ibressan/ThePromptForce-Blog`](https://github.com/ibressan/ThePromptForce-Blog) —
+  blog posts (published manually for now).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-![Salesforce](https://img.shields.io/badge/Salesforce-00A1E0?logo=salesforce&logoColor=white)
 
-**[🇧🇷 Português](#-português) | [🇺🇸 English](#-english)** · [Como funciona / How it works](./CONTRIBUTING.md)
+## How it deploys
 
----
+`.github/workflows/pages.yml` builds and deploys the site on every push to `main`
+(under `site/**`) **and** whenever either content repo notifies this one via
+`repository_dispatch` (each has its own workflow that fires on publish). The build
+step pulls the latest `editions/` and `blog/` content from those two repos using a
+shared fine-grained PAT (`CROSS_REPO_TOKEN` secret — Contents: read/write on all three
+repos) before running `vite build`, so the deployed site is fully static and the
+content repos' privacy is never exposed to visitors.
 
-## 🇧🇷 Português
+## Local development
 
-### 🗞️ Última Edição
+`site/public/content/` is populated by the CI step above, not checked into git (see
+`site/.gitignore`). Running `npm run dev` locally with an empty `content/` folder means
+the front page has nothing to show. To develop against real data, clone the two content
+repos somewhere and symlink (or copy) their content folders in:
 
-<!-- SALESFORCE_NEWS_START -->
-### 🗓️ Edição de 2026-08-05 / Weekly Edition 2026-08-05
-
-![Cover](https://d259t2jj6zp7qm.cloudfront.net/images/20260729160506/Generic-A-6-e1785366322450.png?w=1000)
-
-## 🇧🇷 Português
-
-### 🚀 Novidades Técnicas
-
-A pauta desta semana reflete uma clara transição rumo à maturidade operacional da plataforma: menos experimentação genérica de IA e mais ferramentas práticas para desenvolvedores e administradores. Com a versão final do suporte a React, novas orientações de arquitetura para orquestração de múltiplos agentes e um alerta crítico sobre segurança no Experience Cloud, o foco central está na prontidão para produção e na governança rígida.
-
-#### Apex
-
-Ferramentas de inteligência artificial generativa frequentemente falham ao tentar adivinhar nomes de API de campos customizados ou estruturas complexas de XML do Salesforce. Para resolver esse problema na raiz, a introdução do padrão Metadata API Context Skills permite fornecer o contexto exato do esquema da org aos assistentes de IA antes que gerem código ou artefatos. O ganho prático é imediato: menos alucinações de modelo, código gerado com mais precisão e uma redução drástica em falhas de implantação dentro dos pipelines de CI/CD. — 📅 30/07/2026 · 🔗 [Leia mais](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills)
-
-#### LWC (Lightning Web Components)
-
-Desenvolver interfaces dinâmicas e customizadas no Salesforce não está mais restrito exclusivamente à sintaxe padrão do LWC. A disponibilidade geral (GA) do Salesforce Multi-Framework agora permite que equipes executem aplicações React diretamente na plataforma sem a complicação de gerenciar fluxos de autenticação externos ou tokens OAuth complexos. Oferecendo suporte nativo a consultas GraphQL e chamadas diretas a métodos Apex, a funcionalidade abre espaço para reaproveitar bibliotecas web consolidadas sem comprometer o modelo de segurança da org. — 📅 23/07/2026 · 🔗 [Leia mais](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp)
-
-#### Flow
-
-O design de telas no Screen Flow recebeu uma melhoria pontual, mas extremamente útil na atualização Summer '26. A nova configuração de grupos de botões de opção (*Radio Button Groups*) permite dispor escolhas simples em formatos horizontais ou em grades, eliminando a dependência de seletores do tipo picklist que escondem opções do usuário ou listas verticais extensas. Para quem constrói rotinas focadas em alta produtividade, a mudança reduz cliques e melhora a experiência visual sem exigir a criação de componentes LWC customizados. — 📅 05/08/2026 · 🔗 [Leia mais](https://www.salesforceben.com/how-to-create-a-radio-button-group-in-salesforce-flow/)
-
-#### Admin
-
-Uma onda contínua de tentativas de extração não autorizada de dados reacende o alerta para equipes de administração e segurança. Relatórios recentes mostram que ataques automatizados continuam explorando permissões excessivas atribuídas a perfis de usuários convidados (*Guest Users*) no Experience Cloud. Conduzir uma revisão imediata das regras de compartilhamento para convidados, do acesso a objetos e dos pontos de extremidade públicos é a medida preventiva mais importante da semana para evitar o vazamento de informações sensíveis. — 📅 05/08/2026 · 🔗 [Leia mais](https://www.salesforceben.com/salesforce-hacks-2026-everything-we-know-so-far/)
-
-Diagnosticar a visibilidade de registros e a hierarquia de privilégios ganha um aliado conversacional com os novos recursos do Setup com Agentforce. Em paralelo, diretrizes de arquitetura para orquestração de múltiplos agentes detalham exatamente quando vale a pena dividir capacidades operacionais entre agentes especializados em vez de concentrar toda a lógica em um único "superagente". Esse conjunto de orientações dá aos administradores ferramentas mais eficientes tanto para solucionar chamados de acesso quanto para projetar ecossistemas autônomos sustentáveis. — 📅 30/07/2026 · 🔗 [Leia mais](https://admin.salesforce.com/blog/2026/solving-sharing-mysteries-with-setup-with-agentforce-podcast)
-
-### 💡 Impacto Prático
-
-As atualizações da semana deixam claro que a disciplina arquitetônica precisa acompanhar o avanço das ferramentas autônomas na plataforma. Para times que utilizam IA no desenvolvimento de código ou automações, grounding via Metadata API é um passo que deve ser incorporado aos processos para evitar refatorações desnecessárias em homologação. Na área de segurança, a prioridade absoluta deve ser uma varredura completa nos perfis e regras de compartilhamento de *Guest Users* no Experience Cloud, uma vez que configurações padrão antigas continuam sendo o principal alvo de varreduras maliciosas. No front-end, a chegada do React Multi-Framework em GA oferece flexibilidade real para utilizar talentos da Web tradicional, mantendo as chamadas dentro das permissões nativas da org. Por fim, ao planejar novos agentes de IA, evite a armadilha de criar agentes monolíticos: divida responsabilidades entre assistentes focados para garantir manutenção simples e previsibilidade nas respostas.
-
-### 📖 Destaque de Leitura
-
-- [Build with React on Salesforce: Multi-Framework is now GA](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp) — 📅 23/07/2026
-  Um artigo técnico detalhado sobre como construir aplicações React nativas dentro da plataforma, cobrindo integração via GraphQL, invocação de Apex e as diretrizes para migração a partir da fase beta.
-
-- [What Is Multi-Agent Orchestration, and When To Build a Super Agent or a Single Agent](https://admin.salesforce.com/blog/2026/what-is-soma-and-when-to-build-a-super-agent-or-a-single-agent) — 📅 27/07/2026
-  Uma análise aprofundada sobre arquitetura de agentes autônomos, apresentando cenários práticos de quando separar funções em agentes especializados para evitar gargalos de contexto e falhas de execução.
-
-- [Build Smarter with Metadata API Context Skills](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills) — 📅 30/07/2026
-  Explica a mecânica de fornecer o contexto da Metadata API para assistentes de IA, mostrando como essa abordagem elimina erros de sintaxe e alucinações de campos em pipelines automatizados.
-
----
-
-## 🇺🇸 English
-
-### 🚀 Technical News
-
-This week's updates reflect a clear shift toward operational maturity: moving away from generic AI experimentation and toward pragmatic tools for developers and system architects. From the General Availability of native React support to refined architectural guidance for multi-agent systems and urgent security reminders for Experience Cloud, the focus is squarely on production readiness and tight governance.
-
-#### Apex
-
-Generative AI assistants frequently struggle when guessing custom field API names or complex XML configurations in Salesforce. Addressing this root problem, the introduction of Metadata API Context Skills allows engineering teams to feed exact org schema metadata directly into AI workflows before generating code or configuration artifacts. The practical payoff is immediate: fewer schema hallucinations, higher code accuracy, and a drastic reduction in deployment failures across CI/CD pipelines. — 📅 30/07/2026 · 🔗 [Read more](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills)
-
-#### LWC (Lightning Web Components)
-
-Building custom user experiences on Salesforce is no longer restricted exclusively to Lightning Web Component syntax. The General Availability of Salesforce Multi-Framework enables teams to run React applications natively on the platform without wrestling with custom authentication wrappers or complex OAuth token handling. Featuring native support for GraphQL queries and direct Apex method execution, this release makes it easy to leverage established web skillsets without compromising platform security rules. — 📅 23/07/2026 · 🔗 [Read more](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp)
-
-#### Flow
-
-Screen Flow user interface design gets a subtle but highly effective upgrade in the Summer '26 release. Native Radio Button Groups now allow builders to present simple choices horizontally or in clean multi-column layouts, eliminating the need for dropdown picklists that hide options or long vertical option stacks. For admins designing high-velocity data entry screens, this change cuts down user clicks while keeping layouts clean without requiring custom LWC development. — 📅 05/08/2026 · 🔗 [Read more](https://www.salesforceben.com/how-to-create-a-radio-button-group-in-salesforce-flow/)
-
-#### Admin
-
-Ongoing automated data scraping incidents targeting Salesforce instances serve as an urgent reminder for admin and security teams this week. Investigations confirm that threat actors continue to target overly permissive Experience Cloud Guest User profiles and misconfigured object permissions. Conducting an immediate audit of guest user sharing rules, object access settings, and exposed public endpoints remains the single most critical security action to take right now. — 📅 05/08/2026 · 🔗 [Read more](https://www.salesforceben.com/salesforce-hacks-2026-everything-we-know-so-far/)
-
-Troubleshooting complex record visibility and implicit sharing access is turning conversational thanks to Setup with Agentforce features. Concurrently, new architectural frameworks for multi-agent orchestration clarify exactly when to split operational logic into dedicated, single-purpose agents rather than building monolithic "super agents." Together, these releases equip admins and architects with clearer tools for daily user management and scalable AI system design. — 📅 30/07/2026 · 🔗 [Read more](https://admin.salesforce.com/blog/2026/solving-sharing-mysteries-with-setup-with-agentforce-podcast)
-
-### 💡 Practical Impact
-
-This week's updates demonstrate that governance and architectural planning must keep pace with rapid AI adoption. Teams using AI for metadata creation or Apex generation should adopt Metadata API Context Skills immediately to eliminate broken deployments down the line. On the security front, auditing Experience Cloud Guest User permissions should take top priority, as legacy misconfigurations remain the primary target for automated data scraping. For front-end design, the GA status of React Multi-Framework allows teams to incorporate existing React libraries while preserving native platform access controls. Finally, when architecting autonomous workflows, favor specialized multi-agent orchestration over single overloaded agents to maintain predictability and simplify long-term maintenance.
-
-### 📖 Reading Highlight
-
-- [Build with React on Salesforce: Multi-Framework is now GA](https://developer.salesforce.com/blogs/2026/07/build-with-react-on-salesforce-multi-framework-is-now-ga-jp) — 📅 23/07/2026
-  A detailed technical deep-dive into running React applications natively on Salesforce, covering GraphQL integration patterns, Apex invocations, and key breaking changes from the beta phase.
-
-- [What Is Multi-Agent Orchestration, and When To Build a Super Agent or a Single Agent](https://admin.salesforce.com/blog/2026/what-is-soma-and-when-to-build-a-super-agent-or-a-single-agent) — 📅 27/07/2026
-  A practical architectural guide explaining how to structure autonomous AI workflows, offering clear decision criteria for splitting complex agent capabilities into orchestrated micro-agents.
-
-- [Build Smarter with Metadata API Context Skills](https://developer.salesforce.com/blogs/2026/07/build-smarter-with-metadata-api-context-skills) — 📅 30/07/2026
-  An insightful guide on grounding generative AI tools with real-time metadata schema, showing how to prevent syntax errors and invalid field references during automated development.
-
-📄 [Ver esta edição no histórico / View this edition in the archive](editions/2026-08-05.md)
-<!-- SALESFORCE_NEWS_END -->
-
-📂 Veja o histórico completo em [`editions/`](./editions/).
-
----
-
-## 🇺🇸 English
-
-Automated summaries of Salesforce ecosystem news, generated by AI (Google Gemini) from
-community blogs and feeds — published in **both Brazilian Portuguese (PT-BR) and
-English**. See the [🇧🇷 Português](#-última-edição) section above for the latest edition
-(each one already contains both language versions side by side).
-
-📂 Browse the full archive at [`editions/`](./editions/).
-
----
-
-Want to suggest a new source, understand how the automation works, or run it yourself?
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-<sub>Automatically generated by a GitHub Actions workflow. Last updated: see commit history.</sub>
+```bash
+mkdir -p site/public/content/news site/public/content/blog
+cp -R /path/to/ThePromptForce-News/editions site/public/content/news/
+cp /path/to/ThePromptForce-News/sources.json site/public/content/news/
+cp /path/to/ThePromptForce-Blog/blog/index.json site/public/content/blog/
+cp /path/to/ThePromptForce-Blog/blog/*.md site/public/content/blog/ 2>/dev/null || true
+```

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { useLanguage } from '../i18n/LanguageContext';
 
-import { REPO, RAW_BASE } from '../i18n/repo';
+import { CONTENT_BASE } from '../i18n/repo';
 
-const SOURCES_URL = `${RAW_BASE}sources.json`;
+const SOURCES_URL = `${CONTENT_BASE}news/sources.json`;
 
 interface Source {
   name: string;
@@ -74,16 +74,7 @@ const AboutPage = () => {
               listadas abaixo, envia esse conteúdo para o Google Gemini
               escrever uma edição bilíngue em tom editorial (não é uma lista
               seca de links — cada notícia vem com contexto e um argumento de
-              por que vale a leitura), e publica automaticamente aqui e no{' '}
-              <a
-                href={`https://github.com/${REPO}`}
-                target="_blank"
-                rel="noreferrer"
-                className="link-underline"
-              >
-                repositório no GitHub
-              </a>
-              .
+              por que vale a leitura), e publica automaticamente aqui.
             </p>
             <p>
               A capa de cada edição também não é gerada — é a própria imagem
@@ -106,16 +97,7 @@ const AboutPage = () => {
               listed below, sends that content to Google Gemini to write a
               bilingual, editorial-toned edition (not a dry list of links —
               every story comes with context and a case for why it's worth
-              reading), and publishes automatically here and on the{' '}
-              <a
-                href={`https://github.com/${REPO}`}
-                target="_blank"
-                rel="noreferrer"
-                className="link-underline"
-              >
-                GitHub repository
-              </a>
-              .
+              reading), and publishes automatically here.
             </p>
             <p>
               Each edition's cover isn't generated either — it's the source

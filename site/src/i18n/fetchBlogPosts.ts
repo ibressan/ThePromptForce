@@ -1,7 +1,7 @@
-import { RAW_BASE as REPO_RAW_BASE } from './repo';
+import { CONTENT_BASE } from './repo';
 import { parseBlogPost, ParsedBlogPost } from './blogMarkdown';
 
-const RAW_BASE = `${REPO_RAW_BASE}blog/`;
+const RAW_BASE = `${CONTENT_BASE}blog/`;
 
 interface BlogIndexEntry {
   slug: string;
@@ -14,10 +14,8 @@ export interface RawBlogPost extends ParsedBlogPost {
 }
 
 /**
- * Lists and fetches every blog post, newest first — same pattern as
- * fetchAllEditions: a manifest (blog/index.json) plus plain
- * raw.githubusercontent.com file fetches, to avoid the GitHub Contents
- * API's per-IP rate limit (see fetchEditions.ts for the full story).
+ * Lists and fetches every blog post, newest first, from the site's own
+ * bundled content (see repo.ts for why — the content repo is private).
  */
 export const fetchAllBlogPosts = async (): Promise<RawBlogPost[]> => {
   const indexRes = await fetch(`${RAW_BASE}index.json`);

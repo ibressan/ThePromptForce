@@ -1,6 +1,6 @@
-import { RAW_BASE as REPO_RAW_BASE } from './repo';
+import { CONTENT_BASE } from './repo';
 
-const RAW_BASE = `${REPO_RAW_BASE}editions/`;
+const RAW_BASE = `${CONTENT_BASE}news/editions/`;
 
 interface RawEdition {
   date: string;
@@ -8,14 +8,9 @@ interface RawEdition {
 }
 
 /**
- * Lists and fetches every edition's raw markdown, newest first.
- *
- * Deliberately avoids the GitHub Contents API (api.github.com) to list the
- * editions/ folder: that API caps unauthenticated requests at 60/hour per
- * client IP — shared by every visitor behind the same NAT/proxy — and once
- * exhausted the front page stops loading site-wide with no visible cause.
- * editions/index.json (maintained by script.py on each publish) plus plain
- * raw.githubusercontent.com file fetches have no such limit.
+ * Lists and fetches every edition's raw markdown, newest first, from the
+ * site's own bundled content (see repo.ts for why this isn't a live
+ * cross-repo fetch anymore — the content repo is private).
  */
 export const fetchAllEditions = async (): Promise<RawEdition[]> => {
   const indexRes = await fetch(`${RAW_BASE}index.json`);

@@ -5,8 +5,9 @@ on:
     branches: [main]
     paths:
       - 'site/**'
-      - 'editions/**'
       - '.github/workflows/pages.yml'
+  repository_dispatch:
+    types: [content-updated]
   workflow_dispatch:
 
 permissions:
@@ -21,12 +22,30 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: site
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Fetch content from private News/Blog repos
+        working-directory: ${{ github.workspace }}
+        env:
+          CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p site/public/content/news site/public/content/blog
+
+          git clone --depth 1 \
+            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/ibressan/ThePromptForce-News.git" \
+            /tmp/tpf-news
+          cp -R /tmp/tpf-news/editions site/public/content/news/
+          cp /tmp/tpf-news/sources.json site/public/content/news/
+
+          git clone --depth 1 \
+            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/ibressan/ThePromptForce-Blog.git" \
+            /tmp/tpf-blog
+          cp -R /tmp/tpf-blog/blog/. site/public/content/blog/
+          rm -f site/public/content/blog/README.md
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -37,9 +56,11 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
+        working-directory: site
         run: npm install
 
       - name: Build with vite
+        working-directory: site
         run: npm run build
 
       - name: Upload artifact
