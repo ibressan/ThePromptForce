@@ -12,4 +12,5 @@ export const CATEGORIES: Category[] = [
   { slug: 'data-cloud', label: 'Data Cloud' },
   { slug: 'flow', label: 'Flow' },
   { slug: 'admin', label: 'Admin' },
+  { slug: 'ai-agentforce', label: 'AI & Agentforce' },
 ];
