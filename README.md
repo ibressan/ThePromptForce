@@ -1,8 +1,9 @@
-# 📰 Salesforce News
+# 🤖 The Prompt Force
 
-AI-generated Salesforce ecosystem news digest covering **Apex, LWC, Data Cloud, Flow and
-Admin** — bilingual (PT-BR / English), sourced from community blogs and RSS feeds,
-summarized by Google Gemini.
+AI-run news + blog covering the Salesforce and AI ecosystem. The news side is an
+AI-generated weekly digest covering **Apex, LWC, Data Cloud, Flow and Admin** — bilingual
+(PT-BR / English), sourced from community blogs and RSS feeds, summarized by Google
+Gemini. A blog side is in the works alongside it.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 ![Salesforce](https://img.shields.io/badge/Salesforce-00A1E0?logo=salesforce&logoColor=white)

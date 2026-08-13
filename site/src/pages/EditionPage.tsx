@@ -8,8 +8,9 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { splitEditionByLanguage, buildEditionTitle } from '../i18n/newsMarkdown';
 import { extractToc } from '../i18n/toc';
 
-const REPO = 'ibressan/salesforce-news';
-const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/main/editions/`;
+import { RAW_BASE as REPO_RAW_BASE } from '../i18n/repo';
+
+const RAW_BASE = `${REPO_RAW_BASE}editions/`;
 
 const EditionPage = () => {
   const { date } = useParams<{ date: string }>();
@@ -52,7 +53,7 @@ const EditionPage = () => {
   return (
     <Layout>
       <Link
-        to="/"
+        to="/news"
         className="link-underline text-sm inline-flex items-baseline gap-1.5 mb-8"
       >
         <span className="font-mono">←</span> {t('backToFrontPage')}
@@ -67,7 +68,7 @@ const EditionPage = () => {
       {!error && content !== null && toc.length > 0 && (
         <nav className="not-prose surface-card surface-card-translucent mb-8 p-5 flex items-center gap-6">
           <img
-            src="/salesforce-news/mascote/mascote-toc.png"
+            src="/ThePromptForce/mascote/mascote-toc.png"
             alt=""
             aria-hidden="true"
             className="hidden sm:block shrink-0 w-24 sm:w-28 object-contain"

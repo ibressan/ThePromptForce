@@ -1,5 +1,6 @@
-const REPO = 'ibressan/salesforce-news';
-const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/main/editions/`;
+import { RAW_BASE as REPO_RAW_BASE } from './repo';
+
+const RAW_BASE = `${REPO_RAW_BASE}editions/`;
 
 interface RawEdition {
   date: string;

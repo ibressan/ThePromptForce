@@ -91,7 +91,7 @@ const CategoryPage = () => {
               </ReactMarkdown>
             </div>
             <Link
-              to={`/edition/${item.date}`}
+              to={`/news/edition/${item.date}`}
               className="link-underline text-sm font-semibold text-[var(--accent)]"
             >
               {t('readMore')}

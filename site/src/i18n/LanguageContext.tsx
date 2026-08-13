@@ -7,7 +7,7 @@ import {
 } from 'react';
 import { Language, STRINGS } from './strings';
 
-const STORAGE_KEY = 'salesforce-news-language';
+const STORAGE_KEY = 'the-prompt-force-language';
 
 interface LanguageContextValue {
   language: Language;

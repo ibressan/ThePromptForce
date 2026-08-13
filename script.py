@@ -249,7 +249,7 @@ def markdown_to_email_html(title, markdown_content):
     {body_html}
     <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;">
     <p style="font-size: 12px; color: #666;">
-      Automatically sent by the Salesforce News Bot.
+      Automatically sent by The Prompt Force Bot.
     </p>
   </body>
 </html>
@@ -381,9 +381,9 @@ def update_readme(date_str, markdown_content, relative_edition_path, cover_image
 
 
 def commit_and_push(date_str):
-    subprocess.run(["git", "config", "user.name", "Salesforce News Bot"], check=True)
+    subprocess.run(["git", "config", "user.name", "The Prompt Force Bot"], check=True)
     subprocess.run(
-        ["git", "config", "user.email", "salesforce-news-bot@users.noreply.github.com"], check=True
+        ["git", "config", "user.email", "prompt-force-bot@users.noreply.github.com"], check=True
     )
     subprocess.run(["git", "add", "editions", "README.md"], check=True)
     result = subprocess.run(["git", "diff", "--cached", "--quiet"])
