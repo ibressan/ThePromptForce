@@ -59,6 +59,7 @@ export const buildEditionTitle = (
 
 export const stripMarkdown = (text: string): string =>
   text
+    .replace(/^#{1,6}\s*/, '')
     .replace(/\*\*/g, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/[📅🔗🚀💡📖🇧🇷🇺🇸]/gu, '')
@@ -77,10 +78,21 @@ export const extractCoverImage = (rawContent: string): string | undefined => {
  * Technical News items are editorial paragraphs (no leading "- "), so the
  * excerpt is the first paragraph after that section's heading — usually the
  * lead-in framing the week, which reads well as a teaser.
+ *
+ * The lead-in itself is optional (the prompt lets Cappy skip it for a
+ * scattered week), so the line right after the "### 🚀" heading can already
+ * be a "#### Topic" heading instead of prose. The old regex only checked
+ * for that on *continuation* lines, not the first one, so a skipped lead-in
+ * made it capture the literal "#### Apex" as the excerpt. This now requires
+ * every captured line (including the first) to not start with "#", and
+ * falls back to the first topic's own paragraph when there's no lead-in.
  */
 export const extractLeadParagraph = (body: string): string => {
-  const match = body.match(/###\s*🚀[^\n]*\n+([^\n]+(?:\n(?!\n|#)[^\n]+)*)/);
-  return match ? stripMarkdown(match[1]) : '';
+  const leadIn = body.match(/###\s*🚀[^\n]*\n+((?:(?!#)[^\n]+\n*)+)/);
+  if (leadIn) return stripMarkdown(leadIn[1]);
+
+  const firstTopicParagraph = body.match(/^####[^\n]*\n+([^\n]+)/m);
+  return firstTopicParagraph ? stripMarkdown(firstTopicParagraph[1]) : '';
 };
 
 /**
