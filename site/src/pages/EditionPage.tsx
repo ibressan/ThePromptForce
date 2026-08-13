@@ -80,9 +80,9 @@ const EditionPage = () => {
       {!error && content !== null && (
         <div className="flex items-center gap-2.5 mb-8">
           <img
-            src="/ThePromptForce/apple-touch-icon.png"
+            src="/ThePromptForce/mascote/mascote-about.png"
             alt="Cappy"
-            className="w-9 h-9 rounded-full object-cover border border-[var(--line)]"
+            className="w-9 h-9 rounded-full object-cover object-top border border-[var(--line)]"
           />
           <span className="font-mono text-xs text-[var(--ink-soft)]">
             {t('writtenBy').replace('{name}', 'Cappy')} · {readMinutes} min
