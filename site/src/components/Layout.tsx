@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { PiSunBold, PiMoonBold } from 'react-icons/pi';
+import { PiSunBold, PiMoonBold, PiListBold, PiXBold } from 'react-icons/pi';
 import { useLanguage } from '../i18n/LanguageContext';
 import { CATEGORIES } from '../i18n/categories';
 import { fetchBlogCategories } from '../i18n/fetchBlogPosts';
@@ -41,11 +41,16 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>(
     () => (localStorage.getItem(THEME_STORAGE_KEY) as 'light' | 'dark') || 'light',
   );
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const toggleTheme = () =>
     setTheme((current) => (current === 'light' ? 'dark' : 'light'));
@@ -122,8 +127,40 @@ const Layout = ({ children }: { children: ReactNode }) => {
             >
               {theme === 'dark' ? <PiSunBold /> : <PiMoonBold />}
             </button>
+            <button
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-label="Toggle menu"
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--accent)]"
+            >
+              {mobileMenuOpen ? <PiXBold /> : <PiListBold />}
+            </button>
           </div>
         </div>
+
+        {mobileMenuOpen && (
+          <nav className="md:hidden max-w-5xl mx-auto px-4 pb-3 flex flex-col gap-3">
+            {MODE_LINKS.map((link) => {
+              const isActive =
+                link.to === '/'
+                  ? location.pathname === '/'
+                  : location.pathname.startsWith(link.to);
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`text-sm flex items-center gap-1.5 ${
+                    isActive
+                      ? 'text-[var(--accent)] font-semibold'
+                      : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                  }`}
+                >
+                  <span className="status-dot" />
+                  {t(link.key)}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         {subLinks.length > 0 && (
           <div className="max-w-5xl mx-auto px-4 pb-3 flex items-center gap-4 overflow-x-auto">
