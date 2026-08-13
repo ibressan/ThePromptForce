@@ -26,23 +26,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch content from private News/Blog repos
+      - name: Fetch content from private repos
         working-directory: ${{ github.workspace }}
         env:
           CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+          NEWS_REPO: ${{ secrets.NEWS_REPO }}
+          BLOG_REPO: ${{ secrets.BLOG_REPO }}
         run: |
           set -euo pipefail
 
           mkdir -p site/public/content/news site/public/content/blog
 
           git clone --depth 1 \
-            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/ibressan/ThePromptForce-News.git" \
+            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/${NEWS_REPO}.git" \
             /tmp/tpf-news
           cp -R /tmp/tpf-news/editions site/public/content/news/
           cp /tmp/tpf-news/sources.json site/public/content/news/
 
           git clone --depth 1 \
-            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/ibressan/ThePromptForce-Blog.git" \
+            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/${BLOG_REPO}.git" \
             /tmp/tpf-blog
           cp -R /tmp/tpf-blog/blog/. site/public/content/blog/
           rm -f site/public/content/blog/README.md

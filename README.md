@@ -4,13 +4,9 @@ Code for the [The Prompt Force](https://ibressan.github.io/ThePromptForce/) site
 (React + Vite, deployed to GitHub Pages) — a mix of AI-generated Salesforce news and a
 blog about AI, automation and development.
 
-This repo holds **only the site's code** (`site/`). The actual content lives in two
-private, separate repos, pulled in at build time:
-
-- [`ibressan/ThePromptForce-News`](https://github.com/ibressan/ThePromptForce-News) —
-  weekly Salesforce news digest + the Gemini generation pipeline.
-- [`ibressan/ThePromptForce-Blog`](https://github.com/ibressan/ThePromptForce-Blog) —
-  blog posts (published manually for now).
+This repo holds **only the site's code** (`site/`). The actual content — the weekly
+Salesforce news digest and its generation pipeline, and the blog posts — lives in two
+private, separate repos, pulled in at build time.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
@@ -33,8 +29,8 @@ repos somewhere and symlink (or copy) their content folders in:
 
 ```bash
 mkdir -p site/public/content/news site/public/content/blog
-cp -R /path/to/ThePromptForce-News/editions site/public/content/news/
-cp /path/to/ThePromptForce-News/sources.json site/public/content/news/
-cp /path/to/ThePromptForce-Blog/blog/index.json site/public/content/blog/
-cp /path/to/ThePromptForce-Blog/blog/*.md site/public/content/blog/ 2>/dev/null || true
+cp -R /path/to/news-content-repo/editions site/public/content/news/
+cp /path/to/news-content-repo/sources.json site/public/content/news/
+cp /path/to/blog-content-repo/blog/index.json site/public/content/blog/
+cp /path/to/blog-content-repo/blog/*.md site/public/content/blog/ 2>/dev/null || true
 ```
