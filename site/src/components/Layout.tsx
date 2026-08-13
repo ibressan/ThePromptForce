@@ -174,8 +174,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
           <div>
             <div className="tag-number mb-3">{t('footerMascots').toUpperCase()}</div>
             <div className="flex flex-col gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Cappy — {language === 'pt' ? 'Notícias' : 'News'}</span>
-              <span>Shel — Blog</span>
+              <span>Cappy · {language === 'pt' ? 'Notícias' : 'News'}</span>
+              <span>Shel · Blog</span>
             </div>
           </div>
         </div>

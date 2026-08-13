@@ -63,8 +63,8 @@ const AboutPage = () => {
           <>
             <p>
               O <strong>The Prompt Force</strong> mistura dois formatos: uma
-              digest semanal de notícias do ecossistema Salesforce — cobrindo
-              Apex, LWC, Data Cloud, Flow e Admin — gerada automaticamente a
+              digest semanal de notícias do ecossistema Salesforce, cobrindo
+              Apex, LWC, Data Cloud, Flow e Admin, gerada automaticamente a
               partir de blogs e feeds da comunidade, e um blog com posts mais
               longos e opinativos sobre IA, automação e desenvolvimento.
               Publicado em Português (PT-BR) e English.
@@ -73,11 +73,11 @@ const AboutPage = () => {
               Toda semana, um robô coleta os posts mais recentes das fontes
               listadas abaixo, envia esse conteúdo para o Google Gemini
               escrever uma edição bilíngue em tom editorial (não é uma lista
-              seca de links — cada notícia vem com contexto e um argumento de
+              seca de links: cada notícia vem com contexto e um argumento de
               por que vale a leitura), e publica automaticamente aqui.
             </p>
             <p>
-              A capa de cada edição também não é gerada — é a própria imagem
+              A capa de cada edição também não é gerada: é a própria imagem
               do artigo de origem que o Gemini escolheu como principal
               notícia da semana.
             </p>
@@ -86,8 +86,8 @@ const AboutPage = () => {
           <>
             <p>
               <strong>The Prompt Force</strong> blends two formats: a weekly
-              news digest of the Salesforce ecosystem — covering Apex, LWC,
-              Data Cloud, Flow and Admin — automatically generated from
+              news digest of the Salesforce ecosystem, covering Apex, LWC,
+              Data Cloud, Flow and Admin, automatically generated from
               community blogs and feeds, and a blog with longer, more
               opinionated posts about AI, automation and development.
               Published in both Brazilian Portuguese (PT-BR) and English.
@@ -95,12 +95,12 @@ const AboutPage = () => {
             <p>
               Every week, a bot collects the latest posts from the sources
               listed below, sends that content to Google Gemini to write a
-              bilingual, editorial-toned edition (not a dry list of links —
+              bilingual, editorial-toned edition (not a dry list of links:
               every story comes with context and a case for why it's worth
               reading), and publishes automatically here.
             </p>
             <p>
-              Each edition's cover isn't generated either — it's the source
+              Each edition's cover isn't generated either: it's the source
               article's own image, picked by Gemini as this week's lead
               story.
             </p>
@@ -127,7 +127,7 @@ const AboutPage = () => {
             {language === 'pt' ? (
               <p>
                 <strong>Cappy</strong> é o mascote das notícias no The Prompt
-                Force — uma capivara Trailblazer que mistura <em>code</em>,{' '}
+                Force: uma capivara Trailblazer que mistura <em>code</em>,{' '}
                 <em>copy</em> e um pouco de <em>happy</em>. Representa bem o
                 que essa parte do projeto faz: ler tudo que sai sobre o
                 ecossistema Salesforce e devolver em forma de resumo
@@ -136,8 +136,8 @@ const AboutPage = () => {
               </p>
             ) : (
               <p>
-                <strong>Cappy</strong> is the news mascot on The Prompt Force
-                — a Trailblazer capybara mixing <em>code</em>, <em>copy</em>,
+                <strong>Cappy</strong> is the news mascot on The Prompt Force:
+                a Trailblazer capybara mixing <em>code</em>, <em>copy</em>,
                 and a bit of <em>happy</em>. He's a fitting stand-in for what
                 that side of the project does: read everything coming out of
                 the Salesforce ecosystem and hand it back as a
@@ -149,8 +149,8 @@ const AboutPage = () => {
 
           <p className="font-mono text-xs text-[var(--ink-soft)] mt-4">
             {language === 'pt'
-              ? '🚧 Shel, o mascote do blog, está em produção — chega em breve.'
-              : "🚧 Shel, the blog's mascot, is in the works — coming soon."}
+              ? '🚧 Shel, o mascote do blog, está em produção. Chega em breve.'
+              : "🚧 Shel, the blog's mascot, is in the works. Coming soon."}
           </p>
         </div>
       </div>
