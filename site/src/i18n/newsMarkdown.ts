@@ -120,6 +120,14 @@ const SOURCE_NAMES: Record<string, string> = {
   'sf9to5.com': 'SF9to5',
   'blogs.mulesoft.com': 'MuleSoft Blog',
   'simplysfdc.com': 'SimplySFDC',
+  'salesforcetime.com': 'Salesforce Time',
+  'sfdclesson.com': 'SFDC Lessons',
+  'salesforcefaqs.com': 'Salesforce FAQs',
+  'salesforcediaries.com': 'Salesforce Diaries',
+  'sudipta-deb.in': 'Technical Potpourri',
+  'jenwlee.com': "Jenwlee's Salesforce Blog",
+  'sfdcpanther.com': 'SFDC Panther',
+  'salesforcetrail.com': 'Salesforce Trail',
 };
 
 /** Extracts the friendly names of the sources linked in the body (dedup, in
