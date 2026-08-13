@@ -142,20 +142,53 @@ const Layout = ({ children }: { children: ReactNode }) => {
         )}
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        {children}
+      <div className="max-w-5xl mx-auto px-4 py-10">{children}</div>
 
-        <div className="rule mt-14 pt-4 text-center">
-          <a
-            href="https://github.com/ibressan/ThePromptForce"
-            target="_blank"
-            rel="noreferrer"
-            className="link-underline text-xs text-[var(--ink-soft)]"
-          >
-            GitHub
-          </a>
+      <footer className="border-t border-[var(--line)] mt-14">
+        <div className="max-w-5xl mx-auto px-4 py-12 grid gap-10 sm:grid-cols-[1.3fr_1fr_1fr]">
+          <div>
+            <div className="font-bold text-sm flex items-center gap-2 mb-3">
+              <img src="/ThePromptForce/favicon-32x32.png" alt="" className="w-5 h-5" />
+              The Prompt Force
+            </div>
+            <p className="font-serif-body text-sm text-[var(--ink-soft)] leading-relaxed max-w-xs">
+              {t('footerTagline')}
+            </p>
+          </div>
+
+          <div>
+            <div className="tag-number mb-3">{t('footerExplore').toUpperCase()}</div>
+            <nav className="flex flex-col gap-2 text-sm">
+              {MODE_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="text-[var(--ink-soft)] hover:text-[var(--accent)]"
+                >
+                  {t(link.key)}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            <div className="tag-number mb-3">{t('footerMascots').toUpperCase()}</div>
+            <div className="flex flex-col gap-2 text-sm text-[var(--ink-soft)]">
+              <span>Cappy — {language === 'pt' ? 'Notícias' : 'News'}</span>
+              <span>Shel — Blog</span>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <div className="border-t border-[var(--line)]">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-[var(--ink-soft)]">
+            <span>
+              © {new Date().getFullYear()} The Prompt Force · {t('footerRights')}
+            </span>
+            <span>{t('footerBuiltWith')}</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
