@@ -113,6 +113,13 @@ const SOURCE_NAMES: Record<string, string> = {
   'automationchampion.com': 'Automation Champion',
   'developer.salesforce.com': 'Salesforce Developer Blog',
   'admin.salesforce.com': 'Salesforce Admins',
+  'guilhermedornelas.com.br': 'Radar Salesforce',
+  'salesforcecodex.com': 'Salesforce Codex',
+  'unofficialsf.com': 'Unofficial SF',
+  'metillium.com': 'Metillium',
+  'sf9to5.com': 'SF9to5',
+  'blogs.mulesoft.com': 'MuleSoft Blog',
+  'simplysfdc.com': 'SimplySFDC',
 };
 
 /** Extracts the friendly names of the sources linked in the body (dedup, in
