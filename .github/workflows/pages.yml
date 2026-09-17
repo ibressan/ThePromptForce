@@ -32,10 +32,12 @@ jobs:
           CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
           NEWS_REPO: ${{ secrets.NEWS_REPO }}
           BLOG_REPO: ${{ secrets.BLOG_REPO }}
+          COVERS_REPO: ${{ secrets.COVERS_REPO }}
+          AUDIO_REPO: ${{ secrets.AUDIO_REPO }}
         run: |
           set -euo pipefail
 
-          mkdir -p site/public/content/news site/public/content/blog
+          mkdir -p site/public/content/news/covers site/public/content/news/audio site/public/content/blog
 
           git clone --depth 1 \
             "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/${NEWS_REPO}.git" \
@@ -48,6 +50,22 @@ jobs:
             /tmp/tpf-blog
           cp -R /tmp/tpf-blog/blog/. site/public/content/blog/
           rm -f site/public/content/blog/README.md
+
+          # Covers/Audio: generated media, published by ThePromptForce-News/script.py
+          # (Nano Banana cover images, Gemini TTS audio editions). Best-effort by
+          # design there, so these repos may only have their initial README for a
+          # while — copy whatever exists and move on.
+          git clone --depth 1 \
+            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/${COVERS_REPO}.git" \
+            /tmp/tpf-covers
+          find /tmp/tpf-covers -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+            -exec cp {} site/public/content/news/covers/ \;
+
+          git clone --depth 1 \
+            "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/${AUDIO_REPO}.git" \
+            /tmp/tpf-audio
+          find /tmp/tpf-audio -maxdepth 1 -type f -iname '*.wav' \
+            -exec cp {} site/public/content/news/audio/ \;
 
       - name: Set up Node
         uses: actions/setup-node@v4
