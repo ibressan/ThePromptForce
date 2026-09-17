@@ -36,6 +36,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     copyLink: 'Copiar link',
     linkCopied: 'Link copiado!',
     writtenBy: 'Escrito por {name}',
+    listenToEdition: 'Ouça esta edição',
   },
   en: {
     back: 'Back',
@@ -72,5 +73,6 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     copyLink: 'Copy link',
     linkCopied: 'Link copied!',
     writtenBy: 'Written by {name}',
+    listenToEdition: 'Listen to this edition',
   },
 };
