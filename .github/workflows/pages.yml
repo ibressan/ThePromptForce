@@ -52,20 +52,30 @@ jobs:
           rm -f site/public/content/blog/README.md
 
           # Covers/Audio: generated media, published by ThePromptForce-News/script.py
-          # (Nano Banana cover images, Gemini TTS audio editions). Best-effort by
-          # design there, so these repos may only have their initial README for a
-          # while — copy whatever exists and move on.
-          git clone --depth 1 \
+          # (Nano Banana cover images, Gemini TTS audio editions). Best-effort on both
+          # ends: script.py never fails an edition over these, and this step must not
+          # fail the whole site deploy over them either — CROSS_REPO_TOKEN needs to be
+          # granted access to these two repos separately (it's scoped per-repo), and
+          # until that's done (or if a weekly run generated neither), we just ship the
+          # site without new media instead of blocking News/Blog content from
+          # deploying too.
+          if git clone --depth 1 \
             "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/${COVERS_REPO}.git" \
-            /tmp/tpf-covers
-          find /tmp/tpf-covers -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
-            -exec cp {} site/public/content/news/covers/ \;
+            /tmp/tpf-covers; then
+            find /tmp/tpf-covers -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+              -exec cp {} site/public/content/news/covers/ \;
+          else
+            echo "::warning::Could not clone ${COVERS_REPO} — skipping generated covers."
+          fi
 
-          git clone --depth 1 \
+          if git clone --depth 1 \
             "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/${AUDIO_REPO}.git" \
-            /tmp/tpf-audio
-          find /tmp/tpf-audio -maxdepth 1 -type f -iname '*.wav' \
-            -exec cp {} site/public/content/news/audio/ \;
+            /tmp/tpf-audio; then
+            find /tmp/tpf-audio -maxdepth 1 -type f -iname '*.wav' \
+              -exec cp {} site/public/content/news/audio/ \;
+          else
+            echo "::warning::Could not clone ${AUDIO_REPO} — skipping generated audio."
+          fi
 
       - name: Set up Node
         uses: actions/setup-node@v4
