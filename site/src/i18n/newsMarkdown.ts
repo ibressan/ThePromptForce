@@ -80,8 +80,14 @@ export const extractCoverImage = (rawContent: string): string | undefined => {
  * language sections that splitEditionByLanguage keeps, so callers must read
  * it from the raw content directly rather than from a split body.
  */
-export const extractAudioUrl = (rawContent: string): string | undefined => {
-  const match = rawContent.match(/^🎧 \[[^\]]*\]\((.+)\)/m);
+export const extractAudioUrl = (rawContent: string, language: Language): string | undefined => {
+  // The edition header carries one 🎧 line per language that has audio, each with
+  // a distinct label (script.py always writes "Ouça em Português" / "Listen in
+  // English") — match on that label so switching the language toggle picks the
+  // right file instead of always the first one found (which was always PT-BR).
+  const label = language === 'pt' ? 'Ouça em Português' : 'Listen in English';
+  const pattern = new RegExp(`^🎧 \\[${label}\\]\\((.+)\\)$`, 'm');
+  const match = rawContent.match(pattern);
   return match ? match[1] : undefined;
 };
 
