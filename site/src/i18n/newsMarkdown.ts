@@ -75,6 +75,17 @@ export const extractCoverImage = (rawContent: string): string | undefined => {
 };
 
 /**
+ * Extracts the edition's audio URL from the leading "🎧 [...](url)" line, if
+ * present. Lives in the same preamble as the cover image, before the
+ * language sections that splitEditionByLanguage keeps, so callers must read
+ * it from the raw content directly rather than from a split body.
+ */
+export const extractAudioUrl = (rawContent: string): string | undefined => {
+  const match = rawContent.match(/^🎧 \[[^\]]*\]\((.+)\)/m);
+  return match ? match[1] : undefined;
+};
+
+/**
  * Technical News items are editorial paragraphs (no leading "- "), so the
  * excerpt is the first paragraph after that section's heading — usually the
  * lead-in framing the week, which reads well as a teaser.
