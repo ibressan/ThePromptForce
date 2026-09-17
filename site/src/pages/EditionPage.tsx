@@ -61,8 +61,8 @@ const EditionPage = () => {
     [rawContent],
   );
   const audioUrl = useMemo(
-    () => (rawContent !== null ? extractAudioUrl(rawContent) : undefined),
-    [rawContent],
+    () => (rawContent !== null ? extractAudioUrl(rawContent, language) : undefined),
+    [rawContent, language],
   );
 
   const content = useMemo(() => {
@@ -117,7 +117,7 @@ const EditionPage = () => {
               <span className="font-mono text-xs text-[var(--ink-soft)]">
                 🎧 {t('listenToEdition')}
               </span>
-              <audio controls preload="none" src={audioUrl} className="h-8 max-w-[240px]" />
+              <audio key={audioUrl} controls preload="none" src={audioUrl} className="h-8 max-w-[240px]" />
             </div>
           )}
         </div>
