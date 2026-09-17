@@ -9,6 +9,8 @@ import {
   splitEditionByLanguage,
   buildEditionTitle,
   estimateReadMinutes,
+  extractCoverImage,
+  extractAudioUrl,
 } from '../i18n/newsMarkdown';
 import { extractToc } from '../i18n/toc';
 import ShareButtons from '../components/ShareButtons';
@@ -51,6 +53,18 @@ const EditionPage = () => {
     return splitEditionByLanguage(rawContent, language).body;
   }, [rawContent, language]);
 
+  // Cover image and audio link live in the preamble that splitEditionByLanguage
+  // drops (everything before the "## 🇧🇷"/"## 🇺🇸" headers), so they're read
+  // straight from rawContent instead of from body.
+  const coverImage = useMemo(
+    () => (rawContent !== null ? extractCoverImage(rawContent) : undefined),
+    [rawContent],
+  );
+  const audioUrl = useMemo(
+    () => (rawContent !== null ? extractAudioUrl(rawContent) : undefined),
+    [rawContent],
+  );
+
   const content = useMemo(() => {
     if (body === null || !date) return null;
     const title = buildEditionTitle(date, language, t);
@@ -77,16 +91,35 @@ const EditionPage = () => {
         )}
       </div>
 
+      {!error && content !== null && coverImage && (
+        <img
+          src={coverImage}
+          alt=""
+          className="w-full rounded-lg border border-[var(--line)] mb-6 object-cover aspect-[16/9]"
+        />
+      )}
+
       {!error && content !== null && (
-        <div className="flex items-center gap-2.5 mb-8">
-          <img
-            src="/ThePromptForce/mascote/mascote-about.png"
-            alt="Cappy"
-            className="w-9 h-9 rounded-full object-cover object-top border border-[var(--line)]"
-          />
-          <span className="font-mono text-xs text-[var(--ink-soft)]">
-            {t('writtenBy').replace('{name}', 'Cappy')} · {readMinutes} min
-          </span>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-8">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/ThePromptForce/mascote/mascote-about.png"
+              alt="Cappy"
+              className="w-9 h-9 rounded-full object-cover object-top border border-[var(--line)]"
+            />
+            <span className="font-mono text-xs text-[var(--ink-soft)]">
+              {t('writtenBy').replace('{name}', 'Cappy')} · {readMinutes} min
+            </span>
+          </div>
+
+          {audioUrl && (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-[var(--ink-soft)]">
+                🎧 {t('listenToEdition')}
+              </span>
+              <audio controls preload="none" src={audioUrl} className="h-8 max-w-[240px]" />
+            </div>
+          )}
         </div>
       )}
 
